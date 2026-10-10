@@ -1,0 +1,68 @@
+{
+  "name": "nse-dropcopy-client",
+  "version": "2.0.0",
+  "description": "NSE and BSE Drop Copy Client - Desktop",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "node build.js",
+    "pack": "electron-builder --dir"
+  },
+  "dependencies": {
+    "ini": "^4.1.3"
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.sanjay.nse.dropcopy",
+    "productName": "NSE BSE DropCopy Client",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "dropcopy-client.js",
+      "bse-dropcopy-client.js",
+      "renderer/**/*",
+      "assets/**/*",
+      "package.json",
+      "build-info.json"
+    ],
+    "extraResources": [
+      {
+        "from": "bse_contract",
+        "to": "contract",
+        "filter": [
+          "gw-ca-cert.pem",
+          "BSE_EQD_CONTRACT.csv",
+          "BSE_EQ_SCRIP.csv"
+        ]
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "assets/app-icon.ico"
+    },
+    "nsis": {
+      "include": "build/installer.nsh",
+      "artifactName": "NSE BSE DropCopy Client Setup V2.0.exe",
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "NSE BSE DropCopy Client"
+    }
+  }
+}

@@ -1,0 +1,15 @@
+node_modules/
+dist/
+Backup/
+**/Backup/
+log/
+logs/
+output/
+Trade_File/
+*.log
+*.ini
+setting/
+contract/
+bse_contract/
+gw-ca-cert.pem
+build-info.json

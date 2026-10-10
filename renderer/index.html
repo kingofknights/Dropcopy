@@ -1,0 +1,1918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="Content-Security-Policy"
+      content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline';" />
+<title>NSEFO/BSEFO DropCopy Client V2.0</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body { height: 100vh; width: 100vw; overflow: hidden; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #0f172a; color: #e2e8f0; font-size: 13px;
+  display: flex; flex-direction: column;
+}
+
+/* ---------------- Header ---------------- */
+header {
+  flex-shrink: 0;
+  display: flex; align-items: center;
+  min-height: 68px; padding: 8px 16px; background: #111c2e;
+  border-bottom: 1px solid #2b3b52; gap: 14px;
+}
+.brand { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.logo { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; color: #fff; background: linear-gradient(135deg, #0ea5e9, #2563eb); box-shadow: 0 4px 14px rgba(14,165,233,.22); }
+.logo svg { display: block; width: 23px; height: 23px; overflow: visible; }
+h1 { font-size: 13px; font-weight: 650; white-space: nowrap; }
+.subtitle { font-size: 10px; color: #94a3b8; white-space: nowrap; }
+.company-name-display { display: flex; align-items: center; min-width: 0; max-width: 250px; padding: 4px 0 4px 12px; border-left: 1px solid #3b4c63; }
+#companyName { display: block; max-width: 285px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: #f8fafc; font-size: 12px; font-weight: 700; letter-spacing: .15px; }
+
+.controls { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; min-width: 0; margin: 0 auto; }
+.settings-menu-wrap { position: relative; flex-shrink: 0; }
+.settings-trigger { display: inline-flex; align-items: center; gap: 8px; padding: 8px 11px; border: 1px solid #34465f; border-radius: 8px; background: #1c2b40; color: #e2e8f0; font: inherit; font-size: 11px; font-weight: 650; cursor: pointer; }
+.settings-trigger:hover, .settings-trigger[aria-expanded="true"] { border-color: #38bdf8; background: #223650; }
+.settings-trigger .gear { color: #7dd3fc; font-size: 14px; }
+.settings-caret { color: #94a3b8; font-size: 10px; }
+.settings-dropdown { position: absolute; z-index: 10000; top: calc(100% + 8px); right: 0; width: 250px; max-height: min(78vh, 620px); overflow-y: auto; padding: 7px; border: 1px solid #354861; border-radius: 10px; background: #162337; box-shadow: 0 18px 42px rgba(0,0,0,.45); }
+.settings-dropdown[hidden] { display: none; }
+.settings-group-label { padding: 8px 9px 4px; color: #7790ad; font-size: 9px; font-weight: 750; letter-spacing: .9px; text-transform: uppercase; }
+.settings-item { display: flex; align-items: center; width: 100%; padding: 8px 9px; border: 0; border-radius: 6px; background: transparent; color: #dbe7f5; font: inherit; font-size: 11px; text-align: left; cursor: pointer; }
+.settings-item:hover { background: #253851; color: #fff; }
+.settings-divider { height: 1px; margin: 5px 4px; background: #2c3c53; }
+.settings-theme-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 9px; color: #dbe7f5; font-size: 11px; }
+.settings-theme-row select { max-width: 130px; padding: 5px 7px; border: 1px solid #354861; border-radius: 5px; background: #0f172a; color: #e2e8f0; font: inherit; }
+
+.badge { padding: 5px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; background: #334155; }
+.badge-offline { color: #ef4444; }
+.badge-online { color: #22c55e; }
+.badge-connecting { color: #eab308; }
+
+.btn {
+  padding: 5px 10px; border-radius: 5px;
+  border: 1px solid #334155; background: #334155;
+  color: #e2e8f0; font-size: 11px; font-weight: 500;
+  cursor: pointer; white-space: nowrap;
+}
+.btn:hover:not(:disabled) { background: #475569; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-primary { background: #3b82f6; border-color: #3b82f6; }
+.btn-primary:hover:not(:disabled) { background: #2563eb; }
+.btn-danger { background: #ef4444; border-color: #ef4444; }
+.btn-danger:hover:not(:disabled) { background: #dc2626; }
+.btn-sm { padding: 4px 8px; font-size: 10px; }
+.btn-columns { background: #7c3aed !important; border-color: #7c3aed !important; color: #fff !important; font-weight: 700 !important; }
+.btn-columns:hover { background: #6d28d9 !important; }
+.btn-logs { background: #0891b2 !important; border-color: #0891b2 !important; color: #fff !important; font-weight: 700 !important; }
+.btn-logs:hover { background: #0e7490 !important; }
+.btn-logs.off { background: #475569 !important; border-color: #475569 !important; color: #94a3b8 !important; }
+
+/* ---------------- Main ---------------- */
+main {
+  flex: 1; min-height: 0;
+  display: flex; flex-direction: column;
+  gap: 8px; padding: 10px 14px; overflow: hidden;
+}
+
+.exchange-stats { flex-shrink: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.exchange-stat-group { min-width: 0; }
+.exchange-stat-title { color: #93c5fd; font-size: 9px; font-weight: 700; letter-spacing: 0.7px; margin: 0 0 3px 2px; }
+.stats-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; }
+.stat-card { background: #1e293b; border: 1px solid #334155; border-radius: 5px; padding: 4px 7px; }
+.stat-label { font-size: 8px; text-transform: uppercase; letter-spacing: 0.35px; color: #94a3b8; margin-bottom: 1px; }
+.stat-value { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.15; }
+@keyframes tradesStatFlash { 0%, 35% { background: rgba(34,197,94,.28); border-color: #22c55e; box-shadow: 0 0 12px rgba(34,197,94,.24); } 100% { background: #1e293b; border-color: #334155; box-shadow: none; } }
+@keyframes heartbeatStatFlash { 0%, 35% { background: rgba(56,189,248,.28); border-color: #38bdf8; box-shadow: 0 0 12px rgba(56,189,248,.24); } 100% { background: #1e293b; border-color: #334155; box-shadow: none; } }
+.stat-card.stat-flash-trades { animation: tradesStatFlash .7s ease-out; }
+.stat-card.stat-flash-heartbeat { animation: heartbeatStatFlash .7s ease-out; }
+
+.filter-bar {
+  flex-shrink: 0; display: flex;
+  justify-content: space-between; align-items: center;
+  gap: 8px; padding: 6px 10px;
+  background: #1e293b; border: 1px solid #334155;
+  border-radius: 6px; flex-wrap: wrap;
+}
+.filter-left { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.filter-right { display: flex; align-items: center; gap: 10px; font-size: 11px; color: #94a3b8; }
+.search-input {
+  width: 220px; padding: 5px 10px; border-radius: 5px;
+  border: 1px solid #334155; background: #0f172a;
+  color: #e2e8f0; font-size: 11px; outline: none;
+}
+.search-input:focus { border-color: #3b82f6; }
+.chk { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #94a3b8; cursor: pointer; }
+.row-count, .col-count { font-weight: 600; color: #e2e8f0; font-variant-numeric: tabular-nums; }
+
+.panel {
+  background: #1e293b; border: 1px solid #334155;
+  border-radius: 6px; overflow: hidden;
+  position: relative; display: flex; flex-direction: column;
+}
+.panel-header {
+  flex-shrink: 0; display: flex;
+  justify-content: space-between; align-items: center;
+  padding: 6px 12px; border-bottom: 1px solid #334155;
+}
+.panel-header h2 { font-size: 12px; font-weight: 600; }
+.panel-meta { font-size: 10px; color: #94a3b8; }
+.panel-tools { display: flex; align-items: center; gap: 14px; }
+
+#tradesPanel { flex: 1 1 0; min-height: 0; min-width: 0; width: 100%; max-width: 100%; }
+.exchange-control { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px 3px 0; border-right: 1px solid #334155; }
+.exchange-control:last-of-type { border-right: 0; }
+.exchange-control-name { color: #94a3b8; font-size: 10px; font-weight: 700; }
+.exchange-control .badge { padding: 4px 7px; }
+.exchange-filter { display: inline-flex; align-items: center; gap: 4px; }
+.exchange-filter-label { color: #94a3b8; font-size: 11px; margin-right: 2px; }
+.exchange-filter-btn { background: #1e293b; color: #cbd5e1; border: 1px solid #334155; border-radius: 5px; padding: 5px 9px; cursor: pointer; font: inherit; font-size: 11px; }
+.exchange-filter-btn.active { color: #fff; border-color: #38bdf8; background: #075985; }
+.exchange-cell { font-weight: 700; }
+.exchange-nsefo { color: #38bdf8; }
+.exchange-bsefo { color: #c084fc; }
+@media (max-width: 1100px) {
+  header { flex-wrap: wrap; gap: 7px 12px; }
+  .controls { width: 100%; margin: 0; justify-content: flex-start; order: 3; }
+  .settings-menu-wrap { margin-left: auto; }
+}
+
+.table-wrap {
+  flex: 1 1 0; min-height: 0; min-width: 0; width: 100%; max-width: 100%;
+  overflow-x: auto !important; overflow-y: scroll !important;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  position: relative; background: #0f172a;
+  scrollbar-gutter: stable;
+  scrollbar-width: auto;
+  scrollbar-color: #0ea5e9 #334155;
+}
+.table-wrap:focus-visible { outline: 2px solid #38bdf8; outline-offset: -2px; }
+.table-wrap::-webkit-scrollbar { display: block; width: 18px; height: 18px; }
+.table-wrap::-webkit-scrollbar-track { background: #334155; border-left: 1px solid #475569; }
+.table-wrap::-webkit-scrollbar-thumb {
+  background: #0ea5e9; border-radius: 9px;
+  border: 3px solid #334155; min-height: 42px;
+}
+.table-wrap::-webkit-scrollbar-thumb:hover { background: #38bdf8; }
+.table-wrap::-webkit-scrollbar-corner { background: #334155; }
+
+/* ---------------- Table ---------------- */
+table {
+  border-collapse: collapse; border-spacing: 0;
+  font-size: 11px; white-space: nowrap;
+  border: 1px solid #475569; width: 100%; min-width: 100%;
+  table-layout: fixed;
+}
+col.col-hidden { display: none; }
+thead th {
+  background: #334155; padding: 6px 8px;
+  font-weight: 600; font-size: 9px;
+  text-transform: uppercase; letter-spacing: 0.4px;
+  color: #94a3b8; text-align: left;
+  position: sticky; top: 0; z-index: 3;
+  border-right: 1px solid #475569;
+  border-bottom: 1px solid #475569;
+  padding-right: 12px;
+}
+thead .header-row th { cursor: grab; }
+thead .header-row th:active { cursor: grabbing; }
+.header-row th.column-dragging { opacity: .45; }
+.header-row th.column-drop-target { box-shadow: inset 3px 0 #38bdf8; }
+.col-resize-handle { position: absolute; top: 0; right: -2px; z-index: 8; width: 8px; height: 100%; cursor: col-resize; touch-action: none; }
+.col-resize-handle:hover, .col-resize-handle.dragging { background: rgba(56, 189, 248, .65); }
+body.resizing-column, body.resizing-column * { cursor: col-resize !important; user-select: none !important; }
+thead th:last-child { border-right: none; }
+.header-row th { top: 0; }
+.filter-row th {
+  top: 25px; padding: 3px 4px;
+  background: #263449; z-index: 3;
+  border-right: 1px solid #475569;
+  border-bottom: 1px solid #475569;
+}
+.filter-row th:last-child { border-right: none; }
+.filter-row input {
+  width: 100%; min-width: 50px; padding: 2px 4px;
+  font-size: 10px; border: 1px solid #475569;
+  border-radius: 3px; background: #0f172a;
+  color: #e2e8f0; outline: none;
+}
+.filter-row input:focus { border-color: #3b82f6; background: #0b1220; }
+
+/* ------ Fixed row height — required for virtual scrolling ------ */
+tbody td {
+  height: 26px;
+  line-height: 26px;
+  padding: 0 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
+  border-right: 1px solid #334155;
+  border-bottom: 1px solid #334155;
+}
+
+tbody td:last-child { border-right: none; }
+
+/* Row striping — set by JS since virtual rendering breaks nth-child */
+tbody tr.row-even td { background: rgba(148, 163, 184, 0.05); }
+tbody tr:hover td { background: rgba(59, 130, 246, 0.15); }
+@keyframes tradeBuyFlash { 0%, 35% { background-color: rgba(34, 197, 94, .48); } 100% { background-color: transparent; } }
+@keyframes tradeSellFlash { 0%, 35% { background-color: rgba(239, 68, 68, .48); } 100% { background-color: transparent; } }
+tbody tr.trade-flash-buy td { animation: tradeBuyFlash 5s ease-out; }
+tbody tr.trade-flash-sell td { animation: tradeSellFlash 5s ease-out; }
+
+tbody td.empty {
+  text-align: center; color: #94a3b8;
+  padding: 20px; white-space: normal;
+  border-right: none;
+}
+
+/* Spacer rows — invisible placeholders for correct scrollbar size */
+tbody tr.spacer td {
+  padding: 0 !important;
+  border: 0 !important;
+  line-height: 0 !important;
+  background: transparent !important;
+}
+
+th.col-hidden, td.col-hidden { display: none !important; }
+.side-buy { color: #22c55e; font-weight: 700; }
+.side-sell { color: #ef4444; font-weight: 700; }
+.price { color: #fbbf24; font-weight: 600; }
+.symbol-cell { font-weight: 700; color: #93c5fd; }
+.expiry-cell { color: #a78bfa; font-weight: 600; }
+.status-cell { font-weight: 700; }
+.status-TRADE { color: #22c55e; }
+.status-MODIFY_CONFIRM { color: #eab308; }
+.status-CANCEL_CONFIRM { color: #f97316; }
+.status-CANCEL { color: #f97316; }
+.status-MODIFY_REJECT { color: #ef4444; }
+.status-CANCEL_REJECT { color: #ef4444; }
+
+tr.row-cancelled td { background: rgba(249, 115, 22, 0.10) !important; }
+tr.row-cancelled:hover td { background: rgba(249, 115, 22, 0.20) !important; }
+tbody tr.row-selected td { background: #1d4ed8 !important; color: #fff; box-shadow: inset 0 1px #60a5fa, inset 0 -1px #60a5fa; }
+tbody tr.row-selected:hover td { background: #2563eb !important; }
+tbody tr.row-selected td:first-child { background: #1e40af !important; }
+
+/* Sticky first column */
+.header-row th:first-child,
+.filter-row th:first-child,
+tbody td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 4;
+  background: #1e293b;
+  box-shadow: 2px 0 4px rgba(0,0,0,0.4);
+}
+.header-row th:first-child { background: #334155; z-index: 5; }
+.filter-row th:first-child { background: #263449; z-index: 5; }
+tbody tr:nth-child(even) td:first-child { background: #1a2437; }
+tbody tr:hover td:first-child { background: #1e3a5c; }
+tbody tr.spacer td:first-child { background: transparent !important; box-shadow: none !important; }
+
+/* ---------------- Logs panel ---------------- */
+#logsPanel { flex-shrink: 0; max-height: 160px; }
+#logsPanel.hidden { display: none !important; }
+.logs {
+  flex: 1; min-height: 0; overflow-y: auto;
+  padding: 6px 12px;
+  font-family: Consolas, monospace;
+  font-size: 10.5px; line-height: 1.4;
+  scrollbar-width: thin;
+  scrollbar-color: #475569 #1e293b;
+}
+.logs::-webkit-scrollbar { width: 10px; }
+.logs::-webkit-scrollbar-track { background: #1e293b; }
+.logs::-webkit-scrollbar-thumb { background: #475569; border-radius: 5px; }
+.log-line { white-space: pre-wrap; word-break: break-word; }
+.log-WARNING { color: #eab308; }
+.log-ERROR { color: #ef4444; }
+.log-DEBUG { color: #94a3b8; }
+.log-time { color: #94a3b8; margin-right: 6px; }
+
+/* ---------------- In-app exchange configuration ---------------- */
+.config-modal-backdrop { position: fixed; inset: 0; z-index: 999999; display: none; align-items: center; justify-content: center; background: rgba(2, 6, 23, .78); padding: 18px; }
+.config-modal-backdrop.show { display: flex; }
+.config-modal { width: min(760px, 96vw); max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; background: #1e293b; border: 1px solid #475569; border-radius: 10px; box-shadow: 0 24px 70px rgba(0,0,0,.6); }
+.config-modal-header, .config-modal-footer { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #172336; }
+.config-modal-header { border-bottom: 1px solid #334155; }
+.config-modal-header h2 { flex: 1; font-size: 15px; }
+.config-modal-footer { justify-content: flex-end; border-top: 1px solid #334155; }
+.config-modal-body { padding: 14px 16px; overflow: auto; }
+.config-note { color: #94a3b8; font-size: 11px; margin-bottom: 12px; line-height: 1.5; }
+.config-section { margin: 0 0 14px; border: 1px solid #334155; border-radius: 7px; overflow: hidden; }
+.config-section h3 { padding: 7px 10px; background: #263449; color: #93c5fd; font-size: 11px; text-transform: uppercase; }
+.config-field { display: grid; grid-template-columns: minmax(150px, 32%) 1fr; gap: 12px; align-items: center; padding: 7px 10px; border-top: 1px solid #334155; }
+.config-field label { color: #cbd5e1; font-size: 11px; }
+.config-field input, .config-field select { min-width: 0; width: 100%; padding: 6px 8px; border: 1px solid #475569; border-radius: 4px; background: #0f172a; color: #e2e8f0; font: inherit; }
+.config-input-wrap { display: flex; min-width: 0; gap: 6px; }
+.config-input-wrap input { flex: 1; min-width: 0; }
+.config-field input:disabled, .config-field select:disabled { color: #94a3b8; opacity: .75; }
+.config-status { margin-right: auto; color: #94a3b8; font-size: 11px; }
+@media (max-width: 600px) { .config-field { grid-template-columns: 1fr; gap: 5px; } }
+
+/* ---------------- User-selectable themes ---------------- */
+body[data-theme="light"] { background: #f1f5f9; color: #0f172a; }
+body[data-theme="light"] .company-name-display { border-left-color: #2563eb; }
+body[data-theme="light"] #companyName { color: #0f172a; }
+body[data-theme="solarized"] #companyName { color: #073642; }
+body[data-theme="light"] header, body[data-theme="light"] .config-modal-header, body[data-theme="light"] .config-modal-footer { background: #e2e8f0; color: #0f172a; border-color: #cbd5e1; }
+body[data-theme="light"] .subtitle, body[data-theme="light"] .stat-label, body[data-theme="light"] .filter-right, body[data-theme="light"] .chk,
+body[data-theme="light"] .exchange-control-name, body[data-theme="light"] .exchange-filter-label, body[data-theme="light"] .config-note,
+body[data-theme="light"] .config-field label, body[data-theme="light"] .cancel-popup-label { color: #475569; }
+body[data-theme="light"] main { background: #f1f5f9; }
+body[data-theme="light"] .stat-card, body[data-theme="light"] .filter-bar, body[data-theme="light"] .panel,
+body[data-theme="light"] .config-modal, body[data-theme="light"] .config-section, body[data-theme="light"] #colPanel { background: #fff; color: #0f172a; border-color: #cbd5e1; }
+body[data-theme="light"] .panel-header, body[data-theme="light"] .config-section h3 { background: #e2e8f0; color: #0f172a; border-color: #cbd5e1; }
+body[data-theme="light"] .table-wrap, body[data-theme="light"] .logs, body[data-theme="light"] .cancel-popup-footer { background: #fff; color: #0f172a; }
+body[data-theme="light"] table { color: #0f172a; border-color: #cbd5e1; }
+body[data-theme="light"] thead th { background: #dbeafe; color: #1e3a8a; border-color: #cbd5e1; }
+body[data-theme="light"] .filter-row th { background: #eff6ff; }
+body[data-theme="light"] .filter-row input, body[data-theme="light"] .search-input,
+body[data-theme="light"] .config-field input, body[data-theme="light"] .config-field select { background: #fff; color: #0f172a; border-color: #94a3b8; }
+body[data-theme="light"] tbody td { border-color: #e2e8f0; }
+body[data-theme="light"] tbody tr.row-even td { background: #f8fafc; }
+body[data-theme="light"] tbody tr:hover td { background: #dbeafe; }
+body[data-theme="light"] .header-row th:first-child { background: #dbeafe; }
+body[data-theme="light"] .filter-row th:first-child { background: #eff6ff; }
+body[data-theme="light"] tbody td:first-child, body[data-theme="light"] tbody tr:nth-child(even) td:first-child { background: #f1f5f9; }
+body[data-theme="light"] tbody tr:hover td:first-child { background: #dbeafe; }
+body[data-theme="light"] .cancel-popup, body[data-theme="light"] .cancel-popup-body { background: #fff; color: #0f172a; }
+body[data-theme="light"] .cancel-popup-row { border-color: #e2e8f0; }
+body[data-theme="light"] .cancel-popup-value { color: #0f172a; }
+body[data-theme="light"] .cp-header, body[data-theme="light"] .cp-actions, body[data-theme="light"] .cp-footer { background: #e2e8f0; color: #0f172a; }
+body[data-theme="light"] .exchange-filter-btn { background: #fff; color: #334155; border-color: #cbd5e1; }
+body[data-theme="light"] .exchange-filter-btn.active { background: #dbeafe; color: #1e3a8a; }
+
+body[data-theme="midnight"] { background: #070b14; color: #dbeafe; }
+body[data-theme="midnight"] header, body[data-theme="midnight"] .config-modal-header, body[data-theme="midnight"] .config-modal-footer { background: #080d18; }
+body[data-theme="midnight"] main, body[data-theme="midnight"] .table-wrap { background: #070b14; }
+body[data-theme="midnight"] .stat-card, body[data-theme="midnight"] .filter-bar, body[data-theme="midnight"] .panel,
+body[data-theme="midnight"] .config-modal, body[data-theme="midnight"] .config-section, body[data-theme="midnight"] #colPanel { background: #101827; }
+body[data-theme="midnight"] .panel-header, body[data-theme="midnight"] .config-section h3, body[data-theme="midnight"] thead th { background: #172338; }
+body[data-theme="midnight"] .filter-row th { background: #111c2e; }
+body[data-theme="midnight"] .filter-row input, body[data-theme="midnight"] .search-input,
+body[data-theme="midnight"] .config-field input, body[data-theme="midnight"] .config-field select { background: #080d18; }
+body[data-theme="midnight"] .logs, body[data-theme="midnight"] .cancel-popup-footer { background: #080d18; }
+
+body[data-theme="ocean"] { background: #071923; color: #d9f3f5; }
+body[data-theme="ocean"] header, body[data-theme="ocean"] .config-modal-header, body[data-theme="ocean"] .config-modal-footer { background: #092531; border-color: #155e75; }
+body[data-theme="ocean"] main, body[data-theme="ocean"] .table-wrap { background: #071923; }
+body[data-theme="ocean"] .stat-card, body[data-theme="ocean"] .filter-bar, body[data-theme="ocean"] .panel,
+body[data-theme="ocean"] .config-modal, body[data-theme="ocean"] .config-section, body[data-theme="ocean"] #colPanel { background: #0c2935; border-color: #155e75; }
+body[data-theme="ocean"] .panel-header, body[data-theme="ocean"] .config-section h3, body[data-theme="ocean"] thead th { background: #12404e; }
+body[data-theme="ocean"] .filter-row th { background: #103541; }
+body[data-theme="ocean"] .filter-row input, body[data-theme="ocean"] .search-input,
+body[data-theme="ocean"] .config-field input, body[data-theme="ocean"] .config-field select { background: #061820; border-color: #1e7180; }
+body[data-theme="ocean"] .exchange-filter-btn.active { background: #0e5966; border-color: #2dd4bf; }
+
+body[data-theme="emerald"] { background: #101b18; color: #e0f2e9; }
+body[data-theme="emerald"] header, body[data-theme="emerald"] .config-modal-header, body[data-theme="emerald"] .config-modal-footer { background: #13251e; border-color: #28543f; }
+body[data-theme="emerald"] main, body[data-theme="emerald"] .table-wrap { background: #101b18; }
+body[data-theme="emerald"] .stat-card, body[data-theme="emerald"] .filter-bar, body[data-theme="emerald"] .panel,
+body[data-theme="emerald"] .config-modal, body[data-theme="emerald"] .config-section, body[data-theme="emerald"] #colPanel { background: #192b23; border-color: #28543f; }
+body[data-theme="emerald"] .panel-header, body[data-theme="emerald"] .config-section h3, body[data-theme="emerald"] thead th { background: #234333; }
+body[data-theme="emerald"] .filter-row th { background: #1d382b; }
+body[data-theme="emerald"] .filter-row input, body[data-theme="emerald"] .search-input,
+body[data-theme="emerald"] .config-field input, body[data-theme="emerald"] .config-field select { background: #0d1913; border-color: #397052; }
+body[data-theme="emerald"] .exchange-filter-btn.active { background: #17613e; border-color: #4ade80; }
+
+body[data-theme="purple"] { background: #171126; color: #eee7ff; }
+body[data-theme="purple"] header, body[data-theme="purple"] .config-modal-header, body[data-theme="purple"] .config-modal-footer { background: #211735; border-color: #513b76; }
+body[data-theme="purple"] main, body[data-theme="purple"] .table-wrap { background: #171126; }
+body[data-theme="purple"] .stat-card, body[data-theme="purple"] .filter-bar, body[data-theme="purple"] .panel,
+body[data-theme="purple"] .config-modal, body[data-theme="purple"] .config-section, body[data-theme="purple"] #colPanel { background: #261c3b; border-color: #513b76; }
+body[data-theme="purple"] .panel-header, body[data-theme="purple"] .config-section h3, body[data-theme="purple"] thead th { background: #382653; }
+body[data-theme="purple"] .filter-row th { background: #302148; }
+body[data-theme="purple"] .filter-row input, body[data-theme="purple"] .search-input,
+body[data-theme="purple"] .config-field input, body[data-theme="purple"] .config-field select { background: #151023; border-color: #644a91; }
+body[data-theme="purple"] .exchange-filter-btn.active { background: #653c91; border-color: #c084fc; }
+
+body[data-theme="contrast"] { background: #000; color: #fff; }
+body[data-theme="contrast"] header, body[data-theme="contrast"] main, body[data-theme="contrast"] .table-wrap,
+body[data-theme="contrast"] .logs, body[data-theme="contrast"] .config-modal-header, body[data-theme="contrast"] .config-modal-footer { background: #000; color: #fff; }
+body[data-theme="contrast"] .stat-card, body[data-theme="contrast"] .filter-bar, body[data-theme="contrast"] .panel,
+body[data-theme="contrast"] .config-modal, body[data-theme="contrast"] .config-section, body[data-theme="contrast"] #colPanel { background: #111; color: #fff; border: 1px solid #fff; }
+body[data-theme="contrast"] .panel-header, body[data-theme="contrast"] .config-section h3, body[data-theme="contrast"] thead th,
+body[data-theme="contrast"] .filter-row th { background: #222; color: #fff; border-color: #fff; }
+body[data-theme="contrast"] .filter-row input, body[data-theme="contrast"] .search-input,
+body[data-theme="contrast"] .config-field input, body[data-theme="contrast"] .config-field select { background: #000; color: #fff; border: 1px solid #fff; }
+body[data-theme="contrast"] .exchange-filter-btn.active { background: #0033cc; color: #fff; border: 2px solid #ff0; }
+body[data-theme="contrast"] .symbol-cell { color: #7df9ff; }
+body[data-theme="contrast"] .price { color: #ff0; }
+
+body[data-theme="nord"] { background: #2e3440; color: #eceff4; }
+body[data-theme="nord"] header, body[data-theme="nord"] .config-modal-header, body[data-theme="nord"] .config-modal-footer { background: #2e3440; border-color: #4c566a; }
+body[data-theme="nord"] main, body[data-theme="nord"] .table-wrap { background: #2e3440; }
+body[data-theme="nord"] .stat-card, body[data-theme="nord"] .filter-bar, body[data-theme="nord"] .panel,
+body[data-theme="nord"] .config-modal, body[data-theme="nord"] .config-section, body[data-theme="nord"] #colPanel { background: #3b4252; border-color: #4c566a; }
+body[data-theme="nord"] .panel-header, body[data-theme="nord"] .config-section h3, body[data-theme="nord"] thead th { background: #434c5e; }
+body[data-theme="nord"] .filter-row th { background: #3b4252; }
+body[data-theme="nord"] .filter-row input, body[data-theme="nord"] .search-input,
+body[data-theme="nord"] .config-field input, body[data-theme="nord"] .config-field select { background: #2e3440; border-color: #4c566a; color: #eceff4; }
+body[data-theme="nord"] .symbol-cell { color: #88c0d0; }
+body[data-theme="nord"] .exchange-filter-btn.active { background: #3b5b70; border-color: #88c0d0; }
+
+body[data-theme="solarized"] { background: #fdf6e3; color: #586e75; }
+body[data-theme="solarized"] header, body[data-theme="solarized"] .config-modal-header, body[data-theme="solarized"] .config-modal-footer { background: #eee8d5; color: #586e75; border-color: #d6ceb8; }
+body[data-theme="solarized"] main, body[data-theme="solarized"] .table-wrap, body[data-theme="solarized"] .logs { background: #fdf6e3; color: #586e75; }
+body[data-theme="solarized"] .stat-card, body[data-theme="solarized"] .filter-bar, body[data-theme="solarized"] .panel,
+body[data-theme="solarized"] .config-modal, body[data-theme="solarized"] .config-section, body[data-theme="solarized"] #colPanel { background: #fffdf5; color: #586e75; border-color: #d6ceb8; }
+body[data-theme="solarized"] .panel-header, body[data-theme="solarized"] .config-section h3, body[data-theme="solarized"] thead th { background: #eee8d5; color: #586e75; }
+body[data-theme="solarized"] .filter-row th { background: #f5efdc; }
+body[data-theme="solarized"] .filter-row input, body[data-theme="solarized"] .search-input,
+body[data-theme="solarized"] .config-field input, body[data-theme="solarized"] .config-field select { background: #fffdf5; color: #586e75; border-color: #b8ae98; }
+body[data-theme="solarized"] tbody tr.row-even td { background: rgba(147, 161, 161, .12); }
+body[data-theme="solarized"] tbody tr:hover td { background: rgba(38, 139, 210, .15); }
+body[data-theme="solarized"] .symbol-cell { color: #268bd2; }
+body[data-theme="solarized"] .price { color: #b58900; }
+
+body[data-theme="rose"] { background: #191724; color: #e0def4; }
+body[data-theme="rose"] header, body[data-theme="rose"] .config-modal-header, body[data-theme="rose"] .config-modal-footer { background: #1f1d2e; border-color: #403d52; }
+body[data-theme="rose"] main, body[data-theme="rose"] .table-wrap { background: #191724; }
+body[data-theme="rose"] .stat-card, body[data-theme="rose"] .filter-bar, body[data-theme="rose"] .panel,
+body[data-theme="rose"] .config-modal, body[data-theme="rose"] .config-section, body[data-theme="rose"] #colPanel { background: #26233a; border-color: #403d52; }
+body[data-theme="rose"] .panel-header, body[data-theme="rose"] .config-section h3, body[data-theme="rose"] thead th { background: #302d45; }
+body[data-theme="rose"] .filter-row th { background: #29263d; }
+body[data-theme="rose"] .filter-row input, body[data-theme="rose"] .search-input,
+body[data-theme="rose"] .config-field input, body[data-theme="rose"] .config-field select { background: #191724; border-color: #524f67; }
+body[data-theme="rose"] .symbol-cell { color: #c4a7e7; }
+body[data-theme="rose"] .exchange-filter-btn.active { background: #6e5a83; border-color: #ebbcba; }
+
+body[data-theme="graphite"] { background: #202124; color: #e8eaed; }
+body[data-theme="graphite"] header, body[data-theme="graphite"] .config-modal-header, body[data-theme="graphite"] .config-modal-footer { background: #292a2d; border-color: #5f6368; }
+body[data-theme="graphite"] main, body[data-theme="graphite"] .table-wrap { background: #202124; }
+body[data-theme="graphite"] .stat-card, body[data-theme="graphite"] .filter-bar, body[data-theme="graphite"] .panel,
+body[data-theme="graphite"] .config-modal, body[data-theme="graphite"] .config-section, body[data-theme="graphite"] #colPanel { background: #303134; border-color: #5f6368; }
+body[data-theme="graphite"] .panel-header, body[data-theme="graphite"] .config-section h3, body[data-theme="graphite"] thead th { background: #3c4043; }
+body[data-theme="graphite"] .filter-row th { background: #35363a; }
+body[data-theme="graphite"] .filter-row input, body[data-theme="graphite"] .search-input,
+body[data-theme="graphite"] .config-field input, body[data-theme="graphite"] .config-field select { background: #202124; border-color: #5f6368; }
+body[data-theme="graphite"] .exchange-filter-btn.active { background: #174ea6; border-color: #8ab4f8; }
+
+/* Stronger Live Trades headings for clear label contrast. */
+#tradesPanel .panel-header { border-bottom: 2px solid #38bdf8; }
+#tradesPanel .panel-header h2 { color: #f8fafc; font-size: 13px; font-weight: 700; letter-spacing: .2px; }
+#tradesPanel thead .header-row th {
+  color: #f8fafc; font-size: 10px; font-weight: 700;
+  border-bottom: 2px solid #38bdf8;
+}
+body[data-theme="light"] #tradesPanel .panel-header h2,
+body[data-theme="light"] #tradesPanel thead .header-row th { color: #0f172a; }
+body[data-theme="solarized"] #tradesPanel .panel-header h2,
+body[data-theme="solarized"] #tradesPanel thead .header-row th { color: #073642; }
+
+/* ---------------- Cancel Popup ---------------- */
+.cancel-popup-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 999997; display: none;
+  align-items: center; justify-content: center;
+  animation: cancelFadeIn 0.15s ease-out;
+}
+.cancel-popup-backdrop.show { display: flex; }
+@keyframes cancelFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.cancel-popup {
+  background: #1e293b; border: 2px solid #f97316;
+  border-radius: 12px; padding: 0;
+  min-width: 520px; max-width: 720px;
+  max-height: 85vh; overflow: hidden;
+  display: flex; flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), 0 0 40px rgba(249, 115, 22, 0.35);
+  animation: cancelPopIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes cancelPopIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.cancel-popup-header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 20px;
+  background: linear-gradient(90deg, #7c2d12 0%, #9a3412 100%);
+  border-bottom: 1px solid #f97316;
+}
+.cancel-popup-icon {
+  font-size: 26px; line-height: 1;
+  animation: cancelPulse 1.2s ease-in-out infinite;
+}
+@keyframes cancelPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+.cancel-popup-title {
+  flex: 1; font-size: 15px; font-weight: 700;
+  color: #fff; letter-spacing: 0.3px;
+}
+.cancel-popup-title small {
+  display: block; font-size: 10px; font-weight: 500;
+  color: #fdba74; letter-spacing: 0.5px;
+  margin-top: 2px; text-transform: uppercase;
+}
+.cancel-popup-close {
+  width: 28px; height: 28px; border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff; font-size: 14px; font-weight: 700;
+  cursor: pointer; display: flex;
+  align-items: center; justify-content: center;
+}
+.cancel-popup-close:hover { background: rgba(255, 255, 255, 0.2); }
+
+.cancel-popup-body {
+  padding: 16px 20px;
+  overflow-y: auto;
+  max-height: 400px;
+}
+.cancel-popup-row {
+  display: grid; grid-template-columns: 140px 1fr;
+  gap: 10px; padding: 6px 0;
+  border-bottom: 1px solid rgba(51, 65, 85, 0.6);
+  font-size: 13px;
+}
+.cancel-popup-row:last-child { border-bottom: none; }
+.cancel-popup-label {
+  color: #94a3b8; font-weight: 500;
+  font-size: 11px; text-transform: uppercase;
+  letter-spacing: 0.4px; padding-top: 2px;
+}
+.cancel-popup-value {
+  color: #e2e8f0; font-weight: 600;
+  font-family: Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+  word-break: break-all;
+}
+.cancel-popup-value.buy { color: #22c55e; }
+.cancel-popup-value.sell { color: #ef4444; }
+
+.cancel-popup-footer {
+  padding: 12px 20px;
+  border-top: 1px solid #334155;
+  background: #0f172a;
+  display: flex; align-items: center;
+  justify-content: space-between; gap: 10px;
+}
+.cancel-popup-footer .progress {
+  flex: 1; height: 3px; background: #334155;
+  border-radius: 2px; overflow: hidden;
+}
+.cancel-popup-footer .progress-fill {
+  height: 100%; background: #f97316; width: 100%;
+}
+.cancel-popup-footer .timestamp {
+  font-size: 11px; color: #94a3b8;
+  font-family: Consolas, monospace;
+}
+@keyframes cancelCountdown {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
+/* Column picker */
+#colPanelBackdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 999998; display: none; }
+#colPanelBackdrop.show { display: block; }
+#colPanel {
+  position: fixed; top: 0; right: 0;
+  width: 340px; max-width: 92vw; height: 100vh;
+  background: #1e293b; border-left: 1px solid #3b4a61;
+  box-shadow: -12px 0 40px rgba(0,0,0,0.6);
+  z-index: 999999; display: none;
+  flex-direction: column;
+}
+#colPanel.show { display: flex; }
+#colPanel .cp-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 14px 16px; border-bottom: 1px solid #334155;
+  background: #1a2437;
+}
+#colPanel .cp-header h3 { font-size: 14px; font-weight: 600; color: #e2e8f0; }
+#colPanel .cp-actions { display: flex; gap: 6px; padding: 10px 14px; border-bottom: 1px solid #334155; }
+#colPanel .cp-actions button { flex: 1; }
+#colPanel .cp-list { flex: 1; overflow-y: auto; padding: 4px 0; }
+#colPanel .cp-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 16px; cursor: pointer;
+  color: #e2e8f0; font-size: 12px; user-select: none;
+}
+#colPanel .cp-item:hover { background: rgba(59, 130, 246, 0.15); }
+#colPanel .cp-item input { width: 14px; height: 14px; cursor: pointer; accent-color: #7c3aed; }
+#colPanel .cp-label { flex: 1; }
+#colPanel .cp-key { font-size: 9px; color: #64748b; font-family: Consolas, monospace; }
+#colPanel .cp-footer {
+  padding: 10px 16px; border-top: 1px solid #334155;
+  font-size: 11px; color: #94a3b8;
+  text-align: center; background: #1a2437;
+}
+
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span class="logo" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M3 17.5 8 12.5l3.8 3 6.2-9 3 1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="18" cy="6.5" r="2.2" fill="#bae6fd" stroke="white" stroke-width="1.2"/>
+        <path d="M3 21h18" stroke="white" stroke-opacity=".45" stroke-width="1.2" stroke-linecap="round"/>
+      </svg>
+    </span>
+    <div>
+      <h1>NSEFO/BSEFO DropCopy Client V2.0</h1>
+      <p class="subtitle">Real-time Trade Monitor</p>
+    </div>
+  </div>
+  <div class="company-name-display" title="Company"><span id="companyName">Loading…</span></div>
+  <div class="controls">
+    <div class="exchange-control">
+      <span class="exchange-control-name">NSEFO</span>
+      <span id="statusNseBadge" class="badge badge-offline">● Offline</span>
+      <button id="startNseBtn" class="btn btn-primary">▶ Start</button>
+      <button id="stopNseBtn" class="btn btn-danger" disabled>■ Stop</button>
+    </div>
+    <div class="exchange-control">
+      <span class="exchange-control-name">BSEFO</span>
+      <span id="statusBseBadge" class="badge badge-offline">● Offline</span>
+      <button id="startBseBtn" class="btn btn-primary">▶ Start</button>
+      <button id="stopBseBtn" class="btn btn-danger" disabled>■ Stop</button>
+    </div>
+  </div>
+  <div class="settings-menu-wrap">
+    <button id="settingsToggle" class="settings-trigger" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="settingsDropdown">
+      <span class="gear" aria-hidden="true">&#9881;</span><span>Settings</span><span class="settings-caret" aria-hidden="true">&#9662;</span>
+    </button>
+    <div id="settingsDropdown" class="settings-dropdown" hidden>
+      <div class="settings-group-label">Configuration</div>
+      <button class="settings-item" type="button" data-ui-action="config:NSE">NSEFO connection settings</button>
+      <button class="settings-item" type="button" data-ui-action="config:BSE">BSEFO connection settings</button>
+      <div class="settings-divider"></div>
+      <div class="settings-group-label">Files and folders</div>
+      <button class="settings-item" type="button" data-main-action="choose-output">Choose CSV output folder</button>
+      <button class="settings-item" type="button" data-main-action="choose-backup">Choose backup folder</button>
+      <button class="settings-item" type="button" data-main-action="open-nse-csv">Open NSEFO CSV</button>
+      <button class="settings-item" type="button" data-main-action="open-bse-csv">Open BSEFO CSV</button>
+      <div class="settings-divider"></div>
+      <div class="settings-group-label">Display</div>
+      <button id="settingsColumns" class="settings-item" type="button">Choose table columns</button>
+      <button id="settingsLogs" class="settings-item" type="button" aria-pressed="true">Hide live logs</button>
+      <label class="settings-theme-row" for="settingsTheme"><span>Theme</span>
+        <select id="settingsTheme">
+          <option value="dark">Dark</option><option value="light">Light</option><option value="midnight">Midnight</option><option value="ocean">Ocean</option><option value="emerald">Emerald</option><option value="purple">Purple</option><option value="contrast">High contrast</option><option value="nord">Nord</option><option value="solarized">Solarized</option><option value="rose">Rose</option><option value="graphite">Graphite</option>
+        </select>
+      </label>
+      <div class="settings-divider"></div>
+      <button class="settings-item" type="button" data-main-action="about">About</button>
+      <button class="settings-item" type="button" data-main-action="exit">Exit</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="exchange-stats">
+    <div class="exchange-stat-group">
+      <div class="exchange-stat-title">NSEFO</div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">Runtime</div><div class="stat-value" id="statNsefoRuntime">00:00:00</div></div>
+        <div class="stat-card"><div class="stat-label">Trades Received</div><div class="stat-value" id="statNsefoTradesReceived">0</div></div>
+        <div class="stat-card"><div class="stat-label">Trades Written</div><div class="stat-value" id="statNsefoTradesWritten">0</div></div>
+        <div class="stat-card"><div class="stat-label">Heartbeats</div><div class="stat-value" id="statNsefoHeartbeats">0</div></div>
+        <div class="stat-card"><div class="stat-label">Packets</div><div class="stat-value" id="statNsefoPackets">0</div></div>
+        <div class="stat-card"><div class="stat-label">Streams</div><div class="stat-value" id="statNsefoStreams">0</div></div>
+      </div>
+    </div>
+    <div class="exchange-stat-group">
+      <div class="exchange-stat-title">BSEFO</div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">Runtime</div><div class="stat-value" id="statBsefoRuntime">00:00:00</div></div>
+        <div class="stat-card"><div class="stat-label">Trades Received</div><div class="stat-value" id="statBsefoTradesReceived">0</div></div>
+        <div class="stat-card"><div class="stat-label">Trades Written</div><div class="stat-value" id="statBsefoTradesWritten">0</div></div>
+        <div class="stat-card"><div class="stat-label">Heartbeats</div><div class="stat-value" id="statBsefoHeartbeats">0</div></div>
+        <div class="stat-card"><div class="stat-label">Packets</div><div class="stat-value" id="statBsefoPackets">0</div></div>
+        <div class="stat-card"><div class="stat-label">Streams</div><div class="stat-value" id="statBsefoStreams">0</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="filter-bar">
+    <div class="filter-left">
+      <input id="globalSearch" class="search-input" type="text" placeholder="🔍  Search all columns…" />
+      <button id="clearFiltersBtn" class="btn btn-sm">✕ Clear</button>
+      <div class="exchange-filter" role="group" aria-label="Filter trades by exchange">
+        <span class="exchange-filter-label">Exchange</span>
+        <button class="exchange-filter-btn active" type="button" data-exchange-filter="ALL">All</button>
+        <button class="exchange-filter-btn" type="button" data-exchange-filter="NSEFO">NSEFO</button>
+        <button class="exchange-filter-btn" type="button" data-exchange-filter="BSEFO">BSEFO</button>
+      </div>
+      <label class="chk"><input type="checkbox" id="autoScrollChk" checked /> Auto-scroll</label>
+    </div>
+    <div class="filter-right">
+      <span class="row-count" id="rowCount">0 / 0 rows</span>
+      <span class="col-count" id="colCount">0 / 0 cols</span>
+    </div>
+  </section>
+
+  <section class="panel" id="tradesPanel">
+    <div class="panel-header">
+      <h2>Live Trades</h2>
+      <div class="panel-tools">
+        <label class="chk"><input type="checkbox" id="autoFitColumnsChk" checked /> Auto-fit to window</label>
+        <button id="cpReset" class="btn btn-sm" title="Restore default columns, order, and widths">Default settings</button>
+        <span class="panel-meta" id="tradeCount">0 trades</span>
+      </div>
+    </div>
+    <div class="table-wrap" id="tableWrap" tabindex="0" aria-label="Live trades table; click a row to select it, Ctrl or Command click to select multiple rows, Shift click to select a range; scroll to browse trades">
+      <table id="tradesTable">
+        <colgroup id="tableColumns"></colgroup>
+        <thead>
+          <tr class="header-row" id="headerRow"></tr>
+          <tr class="filter-row" id="filterRow"></tr>
+        </thead>
+        <tbody id="tradesBody">
+          <tr><td class="empty" colspan="21">No trades yet. Click Start to connect.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel" id="logsPanel">
+    <div class="panel-header">
+      <h2>Live Logs</h2>
+      <button id="clearLogsBtn" class="btn btn-sm">Clear</button>
+    </div>
+    <div class="logs" id="logs"></div>
+  </section>
+</main>
+
+<div id="cancelPopupBackdrop" class="cancel-popup-backdrop">
+  <div class="cancel-popup">
+    <div class="cancel-popup-header">
+      <span class="cancel-popup-icon">⚠️</span>
+      <div class="cancel-popup-title">
+        TRADE CANCELLED
+        <small id="cancelPopupSubtitle">NSEFO Drop Copy · CANCEL_CONFIRM</small>
+      </div>
+      <button id="cancelPopupClose" class="cancel-popup-close">✕</button>
+    </div>
+    <div class="cancel-popup-body" id="cancelPopupBody"></div>
+    <div class="cancel-popup-footer">
+      <div class="progress"><div class="progress-fill" id="cancelPopupProgress"></div></div>
+      <span class="timestamp" id="cancelPopupTime"></span>
+    </div>
+  </div>
+</div>
+
+<div id="colPanelBackdrop"></div>
+<aside id="colPanel">
+  <div class="cp-header">
+    <h3>Show / Hide Columns</h3>
+    <button id="cpClose" class="btn btn-sm">✕</button>
+  </div>
+  <div class="cp-actions">
+    <button id="cpShowAll" class="btn btn-sm">Show All</button>
+    <button id="cpHideAll" class="btn btn-sm">Hide All</button>
+  </div>
+  <div class="cp-list" id="cpList"></div>
+  <div class="cp-footer" id="cpCount">0 / 0 visible</div>
+</aside>
+
+<div id="configModalBackdrop" class="config-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="configModalTitle">
+  <section class="config-modal">
+    <div class="config-modal-header"><h2 id="configModalTitle">Exchange Configuration</h2><button id="configClose" class="btn btn-sm">Close</button></div>
+    <div class="config-modal-body"><p class="config-note">Stop this exchange before saving. NSEFO output folder and BSEFO trade output folder, custom CSV folder, and file name can be edited here. Log paths are managed automatically.</p><form id="configForm"></form></div>
+    <div class="config-modal-footer"><span class="config-status" id="configStatus"></span><button id="configCancel" class="btn">Cancel</button><button id="configSave" class="btn btn-primary">Save Configuration</button></div>
+  </section>
+</div>
+
+<script>
+console.log('[v20] script START — VIRTUAL SCROLLING');
+var ALLOWED_THEMES = ['dark', 'light', 'midnight', 'ocean', 'emerald', 'purple', 'contrast', 'nord', 'solarized', 'rose', 'graphite'];
+function setTheme(theme) {
+    if (ALLOWED_THEMES.indexOf(theme) < 0) theme = 'dark';
+    document.body.dataset.theme = theme;
+    try { localStorage.setItem('dropcopy-theme', theme); } catch (e) {}
+}
+try { setTheme(localStorage.getItem('dropcopy-theme') || 'dark'); } catch (e) { setTheme('dark'); }
+
+/* ================================================================
+   Virtual scrolling config
+   ================================================================ */
+var ROW_HEIGHT = 26;      /* must match the CSS "tbody td { height: 26px }" */
+var BUFFER_ROWS = 20;     /* render N rows above/below viewport */
+
+var COLUMNS = [
+    { key: 'exchange',     label: 'Exchange'      },
+    { key: 'member_id',    label: 'MemberId'      },
+    { key: 'trader_id',    label: 'TraderId'      },
+    { key: 'instrument',   label: 'Instrument'    },
+    { key: 'token',        label: 'Token'         },
+    { key: 'symbol',       label: 'Symbol'        },
+    { key: 'expiry_date',  label: 'ExpiryDate'    },
+    { key: 'strike_price', label: 'StrikePrice'   },
+    { key: 'option_type',  label: 'OptionType'    },
+    { key: 'buy_sell',     label: 'BuySell'       },
+    { key: 'ex_qty',       label: 'Ex_Qty'        },
+    { key: 'ex_price',     label: 'Ex_Price'      },
+    { key: 'clnt_id',      label: 'Clnt_Id'       },
+    { key: 'order_no',     label: 'OrderNo'       },
+    { key: 'trade_no',     label: 'TradeNo'       },
+    { key: 'pan',          label: 'PAN'           },
+    { key: 'nnf',          label: 'NNF'           },
+    { key: 'timestamp',    label: 'TimeStamp'     },
+    { key: 'time',         label: 'Time'          },
+    { key: 'trade_status', label: 'TradeStatus'   },
+    { key: 'algo_id',      label: 'Algo Id'       }
+];
+var DEFAULT_COLUMN_ORDER = COLUMNS.map(function(c) { return c.key; });
+var DEFAULT_COLUMN_WIDTHS = {
+    exchange: 82, member_id: 88, trader_id: 88, instrument: 105, token: 72,
+    symbol: 105, expiry_date: 100, strike_price: 88, option_type: 78,
+    buy_sell: 78, ex_qty: 82, ex_price: 88, clnt_id: 100, order_no: 108,
+    trade_no: 100, pan: 82, nnf: 72, timestamp: 132, time: 82,
+    trade_status: 122, algo_id: 82
+};
+
+var DEFAULT_VISIBLE = [
+    'exchange', 'member_id', 'trader_id', 'symbol', 'expiry_date',
+    'strike_price', 'option_type', 'buy_sell', 'ex_qty', 'ex_price',
+    'clnt_id', 'trade_no', 'time', 'trade_status'
+];
+
+var LOCKED = [];
+var STORAGE_KEY = 'dropcopy.cols.v22';
+var LOGS_KEY    = 'dropcopy.logsVisible.v1';
+var AUTO_SCROLL_KEY = 'dropcopy.autoScroll.v1';
+var COLUMN_WIDTHS_KEY = 'dropcopy.columnWidths.v1';
+var AUTO_FIT_KEY = 'dropcopy.autoFitColumns.v1';
+var COLUMN_ORDER_KEY = 'dropcopy.columnOrder.v1';
+
+/* Effectively unlimited — memory cap only */
+var MAX_ROWS = 1000000;
+
+var visibleColumns = loadVisible();
+loadColumnOrder();
+var logsVisible = loadLogsVisible();
+var allTrades = [], columnFilters = {}, globalSearch = '', exchangeFilter = 'ALL';
+var selectedTrades = new Set(), selectionAnchor = null;
+var columnWidths = loadColumnWidths();
+var autoFitColumns = loadAutoFitColumns();
+
+/* ---- Virtual render state ---- */
+var _filtered      = [];      /* current filtered slice */
+var _filterDirty   = true;    /* recompute filtered on next render */
+var _renderStart   = -1;      /* first row currently rendered */
+var _renderEnd     = -1;      /* exclusive end index */
+var _rafPending    = false;
+
+var _pendingTrades = [];
+var _flushTimer = null;
+var FLUSH_INTERVAL_MS = 150;
+var tradeFlashUntil = new WeakMap();
+
+var _cancelPopupTimer = null;
+var CANCEL_POPUP_DURATION_MS = 15000;
+
+/* ================================================================
+   Config / persistence helpers
+   ================================================================ */
+function loadColumnWidths() {
+    try {
+        var raw = localStorage.getItem(COLUMN_WIDTHS_KEY);
+        var widths = raw ? JSON.parse(raw) : {};
+        return widths && typeof widths === 'object' && !Array.isArray(widths) ? widths : {};
+    } catch (e) { return {}; }
+}
+function loadColumnOrder() {
+    try {
+        var raw = localStorage.getItem(COLUMN_ORDER_KEY);
+        var order = raw ? JSON.parse(raw) : null;
+        if (!Array.isArray(order)) return;
+        var rank = new Map(order.map(function(key, index) { return [key, index]; }));
+        COLUMNS.sort(function(a, b) {
+            var ai = rank.has(a.key) ? rank.get(a.key) : Number.MAX_SAFE_INTEGER;
+            var bi = rank.has(b.key) ? rank.get(b.key) : Number.MAX_SAFE_INTEGER;
+            return ai - bi;
+        });
+    } catch (e) {}
+}
+function saveColumnOrder() {
+    try { localStorage.setItem(COLUMN_ORDER_KEY, JSON.stringify(COLUMNS.map(function(c) { return c.key; }))); } catch (e) {}
+}
+function saveColumnWidths() { try { localStorage.setItem(COLUMN_WIDTHS_KEY, JSON.stringify(columnWidths)); } catch (e) {} }
+function loadAutoFitColumns() {
+    try { return localStorage.getItem(AUTO_FIT_KEY) !== 'false'; } catch (e) { return true; }
+}
+function saveAutoFitColumns() { try { localStorage.setItem(AUTO_FIT_KEY, String(autoFitColumns)); } catch (e) {} }
+function loadAutoScroll() { try { return localStorage.getItem(AUTO_SCROLL_KEY) !== 'false'; } catch (e) { return true; } }
+function saveAutoScroll() { try { localStorage.setItem(AUTO_SCROLL_KEY, String(!!(autoScrollChk && autoScrollChk.checked))); } catch (e) {} }
+function preferredColumnWidth(key) { return DEFAULT_COLUMN_WIDTHS[key] || 90; }
+function applyColumnWidths() {
+    if (!tableColumns || !tableWrap || !COLUMNS || !COLUMNS.length) return;
+    var visible = COLUMNS.filter(function(c) { return isVisible(c.key); });
+    var available = Math.max(280, tableWrap.clientWidth || 0);
+    var widths = {};
+    if (autoFitColumns && visible.length) {
+        var totalPreferred = visible.reduce(function(sum, c) { return sum + preferredColumnWidth(c.key); }, 0);
+        var scale = available / totalPreferred;
+        visible.forEach(function(c) { widths[c.key] = Math.max(56, Math.round(preferredColumnWidth(c.key) * scale)); });
+    } else {
+        visible.forEach(function(c) {
+            var stored = Number(columnWidths[c.key]);
+            widths[c.key] = Number.isFinite(stored) && stored >= 56 ? Math.min(600, stored) : preferredColumnWidth(c.key);
+        });
+    }
+    var totalWidth = 0;
+    tableColumns.replaceChildren();
+    COLUMNS.forEach(function(c) {
+        var col = document.createElement('col');
+        col.dataset.col = c.key;
+        col.style.width = (widths[c.key] || preferredColumnWidth(c.key)) + 'px';
+        if (!isVisible(c.key)) col.classList.add('col-hidden');
+        else totalWidth += widths[c.key];
+        tableColumns.appendChild(col);
+    });
+    var table = $('tradesTable');
+    if (table) table.style.width = Math.max(available, totalWidth) + 'px';
+}
+function initColumnResizing() {
+    headerRow.querySelectorAll('.col-resize-handle').forEach(function(handle) {
+        handle.addEventListener('pointerdown', function(event) {
+            event.preventDefault(); event.stopPropagation();
+            var key = handle.dataset.resizeCol;
+            var col = tableColumns.querySelector('col[data-col="' + key + '"]');
+            var th = handle.parentElement;
+            var startWidth = col ? col.getBoundingClientRect().width : th.getBoundingClientRect().width;
+            var startX = event.clientX;
+            autoFitColumns = false;
+            saveAutoFitColumns();
+            var autoFitToggle = $('autoFitColumnsChk');
+            if (autoFitToggle) autoFitToggle.checked = false;
+            document.body.classList.add('resizing-column');
+            handle.classList.add('dragging');
+            function move(moveEvent) {
+                var nextWidth = Math.max(56, Math.min(600, startWidth + moveEvent.clientX - startX));
+                columnWidths[key] = Math.round(nextWidth);
+                applyColumnWidths();
+            }
+            function finish() {
+                document.removeEventListener('pointermove', move);
+                document.removeEventListener('pointerup', finish);
+                document.body.classList.remove('resizing-column');
+                handle.classList.remove('dragging');
+                saveColumnWidths();
+            }
+            document.addEventListener('pointermove', move);
+            document.addEventListener('pointerup', finish, { once: true });
+        });
+    });
+}
+function initColumnReordering() {
+    headerRow.querySelectorAll('th[data-col]').forEach(function(th) {
+        th.draggable = true;
+        th.title = 'Drag to move column';
+        th.addEventListener('dragstart', function(event) {
+            if (event.target.closest('.col-resize-handle')) { event.preventDefault(); return; }
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('text/plain', th.dataset.col);
+            th.classList.add('column-dragging');
+        });
+        th.addEventListener('dragover', function(event) {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'move';
+            th.classList.add('column-drop-target');
+        });
+        th.addEventListener('dragleave', function() { th.classList.remove('column-drop-target'); });
+        th.addEventListener('drop', function(event) {
+            event.preventDefault();
+            var fromKey = event.dataTransfer.getData('text/plain');
+            var toKey = th.dataset.col;
+            if (!fromKey || fromKey === toKey) return;
+            var fromIndex = COLUMNS.findIndex(function(c) { return c.key === fromKey; });
+            var toIndex = COLUMNS.findIndex(function(c) { return c.key === toKey; });
+            if (fromIndex < 0 || toIndex < 0) return;
+            var moved = COLUMNS.splice(fromIndex, 1)[0];
+            COLUMNS.splice(toIndex, 0, moved);
+            saveColumnOrder();
+            buildTable();
+            applyVis();
+            scheduleRender(true);
+        });
+        th.addEventListener('dragend', function() {
+            th.classList.remove('column-dragging');
+            headerRow.querySelectorAll('.column-drop-target').forEach(function(target) { target.classList.remove('column-drop-target'); });
+        });
+    });
+}
+
+function loadVisible() {
+    try {
+        var raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+            var arr = JSON.parse(raw);
+            if (Array.isArray(arr) && arr.length) {
+                var s = new Set(arr);
+                LOCKED.forEach(function(k){ s.add(k); });
+                return s;
+            }
+        }
+    } catch(e) {}
+    return new Set(DEFAULT_VISIBLE);
+}
+function saveVisible() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(visibleColumns))); } catch(e) {} }
+function isVisible(k) { return LOCKED.indexOf(k) !== -1 || visibleColumns.has(k); }
+function visibleCount() { var n=0; for (var i=0;i<COLUMNS.length;i++) if (isVisible(COLUMNS[i].key)) n++; return n; }
+function $(id) { return document.getElementById(id); }
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function loadLogsVisible() {
+    try {
+        var raw = localStorage.getItem(LOGS_KEY);
+        if (raw === 'false') return false;
+        if (raw === 'true') return true;
+    } catch(e) {}
+    return true;
+}
+function saveLogsVisible() { try { localStorage.setItem(LOGS_KEY, logsVisible ? 'true' : 'false'); } catch(e) {} }
+function applyLogsVisibility() {
+    var p = $('logsPanel'), b = $('logsToggleBtn');
+    if (!p) return;
+    if (logsVisible) {
+        p.classList.remove('hidden');
+        if (b) { b.classList.remove('off'); b.textContent = '📋 Logs ✓'; }
+    } else {
+        p.classList.add('hidden');
+        if (b) { b.classList.add('off'); b.textContent = '📋 Logs ✕'; }
+    }
+}
+
+/* ================================================================
+   DOM refs
+   ================================================================ */
+var headerRow = $('headerRow'), filterRow = $('filterRow'), tradesBody = $('tradesBody'), tableColumns = $('tableColumns');
+var rowCountEl = $('rowCount'), colCountEl = $('colCount'), tradeCountEl = $('tradeCount');
+var tableWrap = $('tableWrap'), logsEl = $('logs');
+var globalSearchEl = $('globalSearch'), autoScrollChk = $('autoScrollChk');
+var exchangeControls = {
+    NSEFO: { badge: $('statusNseBadge'), start: $('startNseBtn'), stop: $('stopNseBtn'), value: 'NSE' },
+    BSEFO: { badge: $('statusBseBadge'), start: $('startBseBtn'), stop: $('stopBseBtn'), value: 'BSE' }
+};
+
+/* ================================================================
+   Table header/filter build (unchanged)
+   ================================================================ */
+function buildTable() {
+    var h = '', f = '';
+    for (var i = 0; i < COLUMNS.length; i++) {
+        var c = COLUMNS[i];
+        var cls = isVisible(c.key) ? '' : 'col-hidden';
+        h += '<th data-col="' + c.key + '" class="' + cls + '" title="Drag to move column">' + c.label + '<span class="col-resize-handle" draggable="false" data-resize-col="' + c.key + '" title="Drag to resize"></span></th>';
+        f += '<th data-col="' + c.key + '" class="' + cls + '"><input type="text" data-col="' + c.key + '" placeholder="filter"/></th>';
+    }
+    headerRow.innerHTML = h;
+    filterRow.innerHTML = f;
+    initColumnReordering();
+    initColumnResizing();
+    applyColumnWidths();
+
+    var inputs = filterRow.querySelectorAll('input[data-col]');
+    for (var k = 0; k < inputs.length; k++) {
+        (function(inp){
+            if (columnFilters[inp.dataset.col]) inp.value = columnFilters[inp.dataset.col];
+            var t = null;
+            inp.addEventListener('input', function(){
+                clearTimeout(t);
+                t = setTimeout(function(){
+                    columnFilters[inp.dataset.col] = inp.value.trim().toLowerCase();
+                    invalidateFilter();
+                    tableWrap.scrollTop = 0;
+                    renderVirtual(true);
+                }, 150);
+            });
+        })(inputs[k]);
+    }
+    updateColCount();
+}
+
+function applyVis() {
+    var ths = headerRow.querySelectorAll('th');
+    for (var i = 0; i < ths.length; i++) ths[i].classList.toggle('col-hidden', !isVisible(ths[i].dataset.col));
+    var fths = filterRow.querySelectorAll('th');
+    for (var j = 0; j < fths.length; j++) fths[j].classList.toggle('col-hidden', !isVisible(fths[j].dataset.col));
+    applyColumnWidths();
+    updateColCount();
+    /* Colspan on the empty row must match visible column count */
+    renderVirtual(true);
+}
+
+function updateColCount() {
+    var n = visibleCount();
+    if (colCountEl) colCountEl.textContent = n + ' / ' + COLUMNS.length + ' cols';
+    if ($('cpCount')) $('cpCount').textContent = n + ' / ' + COLUMNS.length + ' visible';
+}
+
+/* ================================================================
+   Column picker
+   ================================================================ */
+function openPanel() { buildPanelList(); $('colPanelBackdrop').classList.add('show'); $('colPanel').classList.add('show'); }
+function closePanel() { $('colPanelBackdrop').classList.remove('show'); $('colPanel').classList.remove('show'); }
+function buildPanelList() {
+    var html = '';
+    for (var i = 0; i < COLUMNS.length; i++) {
+        var c = COLUMNS[i];
+        var locked = LOCKED.indexOf(c.key) !== -1;
+        var checked = isVisible(c.key);
+        html += '<label class="cp-item' + (locked?' locked':'') + '">' +
+            '<input type="checkbox" data-col="' + c.key + '"' + (checked?' checked':'') + (locked?' disabled':'') + '/>' +
+            '<span class="cp-label">' + c.label + '</span>' +
+            '<span class="cp-key">' + c.key + '</span>' +
+            '</label>';
+    }
+    $('cpList').innerHTML = html;
+    var boxes = $('cpList').querySelectorAll('input[type="checkbox"][data-col]');
+    for (var j = 0; j < boxes.length; j++) {
+        (function(cb){
+            cb.addEventListener('change', function(){
+                var k = cb.dataset.col;
+                if (LOCKED.indexOf(k) !== -1) { cb.checked = true; return; }
+                if (cb.checked) visibleColumns.add(k); else visibleColumns.delete(k);
+                saveVisible(); applyVis();
+            });
+        })(boxes[j]);
+    }
+    updateColCount();
+}
+
+if ($('cpClose')) $('cpClose').addEventListener('click', closePanel);
+if ($('colPanelBackdrop')) $('colPanelBackdrop').addEventListener('click', closePanel);
+if ($('cpShowAll')) $('cpShowAll').addEventListener('click', function(){
+    COLUMNS.forEach(function(c){ visibleColumns.add(c.key); });
+    saveVisible(); buildPanelList(); applyVis();
+});
+if ($('cpHideAll')) $('cpHideAll').addEventListener('click', function(){
+    visibleColumns.clear();
+    saveVisible(); buildPanelList(); applyVis();
+});
+if ($('cpReset')) $('cpReset').addEventListener('click', function(){
+    visibleColumns = new Set(DEFAULT_VISIBLE);
+    var defaultRank = new Map(DEFAULT_COLUMN_ORDER.map(function(key, index) { return [key, index]; }));
+    COLUMNS.sort(function(a, b) { return defaultRank.get(a.key) - defaultRank.get(b.key); });
+    columnWidths = {};
+    autoFitColumns = true;
+    saveVisible(); saveColumnOrder(); saveColumnWidths(); saveAutoFitColumns();
+    var autoFitToggle = $('autoFitColumnsChk');
+    if (autoFitToggle) autoFitToggle.checked = true;
+    buildTable(); buildPanelList(); applyVis();
+});
+
+document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') { closePanel(); hideCancelPopup(); closeConfigEditor(); }
+});
+
+window.api.onMenuAction(function(action){
+    if (action === 'columns') openPanel();
+    if (action === 'config:NSE') openConfigEditor('NSE');
+    if (action === 'config:BSE') openConfigEditor('BSE');
+    if (action.indexOf('theme:') === 0) setTheme(action.slice(6));
+    if (action === 'logs') {
+        logsVisible = !logsVisible;
+        saveLogsVisible();
+        applyLogsVisibility();
+        window.api.setLogsVisible(logsVisible);
+    }
+});
+
+var settingsToggle = $('settingsToggle');
+var settingsDropdown = $('settingsDropdown');
+function closeSettingsMenu() {
+    if (!settingsToggle || !settingsDropdown) return;
+    settingsDropdown.hidden = true;
+    settingsToggle.setAttribute('aria-expanded', 'false');
+}
+if (settingsToggle && settingsDropdown) {
+    settingsToggle.addEventListener('click', function(event) {
+        event.stopPropagation();
+        var open = settingsDropdown.hidden;
+        settingsDropdown.hidden = !open;
+        settingsToggle.setAttribute('aria-expanded', String(open));
+    });
+    settingsDropdown.addEventListener('click', async function(event) {
+        var uiAction = event.target.closest('[data-ui-action]');
+        var mainAction = event.target.closest('[data-main-action]');
+        if (uiAction) {
+            var action = uiAction.dataset.uiAction;
+            if (action === 'config:NSE') openConfigEditor('NSE');
+            else if (action === 'config:BSE') openConfigEditor('BSE');
+            closeSettingsMenu();
+            return;
+        }
+        if (mainAction) {
+            closeSettingsMenu();
+            try { await window.api.settingsAction(mainAction.dataset.mainAction); }
+            catch (error) { addLog('ERROR', error.message || 'Settings action failed.'); }
+        }
+    });
+}
+if ($('settingsColumns')) $('settingsColumns').addEventListener('click', function() { closeSettingsMenu(); openPanel(); });
+if ($('settingsLogs')) $('settingsLogs').addEventListener('click', function() {
+    logsVisible = !logsVisible;
+    saveLogsVisible();
+    applyLogsVisibility();
+    $('settingsLogs').textContent = logsVisible ? 'Hide live logs' : 'Show live logs';
+    $('settingsLogs').setAttribute('aria-pressed', String(logsVisible));
+    window.api.setLogsVisible(logsVisible);
+});
+if ($('settingsTheme')) {
+    try { $('settingsTheme').value = localStorage.getItem('dropcopy-theme') || 'dark'; } catch (e) {}
+    $('settingsTheme').addEventListener('change', function() {
+        setTheme($('settingsTheme').value);
+        closeSettingsMenu();
+    });
+}
+document.addEventListener('click', function(event) {
+    if (settingsDropdown && !event.target.closest('.settings-menu-wrap')) closeSettingsMenu();
+});
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') closeSettingsMenu();
+});
+if ($('settingsLogs')) {
+    $('settingsLogs').textContent = logsVisible ? 'Hide live logs' : 'Show live logs';
+    $('settingsLogs').setAttribute('aria-pressed', String(logsVisible));
+}
+
+var editingExchangeConfig = null;
+var editingConfigObject = null;
+async function openConfigEditor(exchange) {
+    var backdrop = $('configModalBackdrop');
+    var form = $('configForm');
+    var status = $('configStatus');
+    if (!backdrop || !form || !window.api.getExchangeConfig) return;
+    editingExchangeConfig = exchange;
+    $('configModalTitle').textContent = exchange + 'FOConfig';
+    status.textContent = 'Loading settings…';
+    form.replaceChildren();
+    $('configSave').disabled = true;
+    backdrop.classList.add('show');
+    try {
+        var result = await window.api.getExchangeConfig(exchange);
+        if (!result || !result.ok) throw new Error(result && result.error || 'Could not load configuration.');
+        editingConfigObject = result.config || {};
+        var managed = new Set(result.managedFields || []);
+        var hidden = new Set(result.hiddenFields || []);
+        Object.keys(editingConfigObject).forEach(function(sectionName) {
+            if (exchange === 'NSE' && ['protocol', 'logging'].indexOf(sectionName.toLowerCase()) >= 0) return;
+            var section = editingConfigObject[sectionName];
+            if (!section || typeof section !== 'object' || Array.isArray(section)) return;
+            var group = document.createElement('section');
+            group.className = 'config-section';
+            var heading = document.createElement('h3');
+            heading.textContent = sectionName.replace(/_/g, ' ');
+            group.appendChild(heading);
+            Object.keys(section).forEach(function(key) {
+                if (hidden.has(sectionName + '.' + key)) return;
+                var isBseOutputDirectory = exchange === 'BSE' && sectionName.toLowerCase() === 'files' && key.toLowerCase() === 'output_csv';
+                var isBseCustomCsv = exchange === 'BSE' && sectionName.toLowerCase() === 'files' && key.toLowerCase() === 'custom_csv';
+                var isBseDirectoryField = isBseOutputDirectory || isBseCustomCsv;
+                var row = document.createElement('div');
+                row.className = 'config-field';
+                var label = document.createElement('label');
+                label.textContent = isBseOutputDirectory ? 'Trade CSV output folder' : isBseCustomCsv ? 'Custom CSV output folder' : key.replace(/_/g, ' ');
+                var input;
+                var value = section[key] == null ? '' : String(section[key]);
+                var customCsvFilename = '';
+                if (isBseDirectoryField) {
+                    var lastSeparator = Math.max(value.lastIndexOf('\\'), value.lastIndexOf('/'));
+                    if (isBseCustomCsv) customCsvFilename = lastSeparator >= 0 ? value.slice(lastSeparator + 1) : value;
+                    value = lastSeparator >= 0 ? value.slice(0, lastSeparator) : '';
+                }
+                if (/^(true|false)$/i.test(value)) {
+                    input = document.createElement('select');
+                    [['true', 'Enabled / True'], ['false', 'Disabled / False']].forEach(function(optionData) {
+                        var option = document.createElement('option');
+                        option.value = optionData[0]; option.textContent = optionData[1]; input.appendChild(option);
+                    });
+                    input.value = value.toLowerCase();
+                } else {
+                    input = document.createElement('input');
+                    var isPathField = (sectionName.toLowerCase() === 'csv_output' && key.toLowerCase() === 'output_dir') ||
+                        (sectionName.toLowerCase() === 'files' && ['ca_cert', 'custom_csv', 'output_csv', 'log_file', 'eqd_contract', 'eq_scrip'].indexOf(key.toLowerCase()) >= 0);
+                    input.type = /password/i.test(key) ? 'password' : (!isPathField && /^-?\d+(\.\d+)?$/.test(value) ? 'number' : 'text');
+                    input.value = value;
+                    if (input.type === 'number' && value.includes('.')) input.step = 'any';
+                }
+                input.dataset.configSection = sectionName;
+                input.dataset.configKey = isBseOutputDirectory ? 'output_csv_dir' : isBseCustomCsv ? 'custom_csv_dir' : key;
+                input.disabled = managed.has(sectionName + '.' + key);
+                label.htmlFor = 'cfg-' + sectionName + '-' + (isBseOutputDirectory ? 'output_csv_dir' : isBseCustomCsv ? 'custom_csv_dir' : key);
+                input.id = label.htmlFor;
+                var inputWrap = document.createElement('div');
+                inputWrap.className = 'config-input-wrap';
+                inputWrap.appendChild(input);
+                var pathField = (sectionName.toLowerCase() === 'csv_output' && key.toLowerCase() === 'output_dir') ||
+                    (sectionName.toLowerCase() === 'files' && ['ca_cert', 'custom_csv', 'output_csv', 'log_file', 'eqd_contract', 'eq_scrip'].indexOf(key.toLowerCase()) >= 0);
+                if (pathField) {
+                    var browse = document.createElement('button');
+                    browse.type = 'button'; browse.className = 'btn btn-sm'; browse.textContent = 'Browse…';
+                    browse.disabled = input.disabled;
+                    browse.addEventListener('click', async function() {
+                        browse.disabled = true;
+                        try {
+                            var chosen = await window.api.chooseConfigPath(exchange, sectionName, key, input.value);
+                            if (chosen && chosen.ok && !chosen.canceled && chosen.path) input.value = chosen.path;
+                            else if (chosen && !chosen.ok) $('configStatus').textContent = chosen.error || 'Could not choose this path.';
+                        } catch (e) { $('configStatus').textContent = e.message; }
+                        browse.disabled = input.disabled;
+                    });
+                    inputWrap.appendChild(browse);
+                }
+                row.append(label, inputWrap);
+                group.appendChild(row);
+                if (isBseCustomCsv) {
+                    var filenameRow = document.createElement('div');
+                    filenameRow.className = 'config-field';
+                    var filenameLabel = document.createElement('label');
+                    filenameLabel.textContent = 'Custom CSV file name';
+                    var filenameInput = document.createElement('input');
+                    filenameInput.type = 'text';
+                    filenameInput.value = customCsvFilename || 'BSE_trades.csv';
+                    filenameInput.dataset.configSection = sectionName;
+                    filenameInput.dataset.configKey = 'custom_csv_filename';
+                    filenameInput.id = 'cfg-' + sectionName + '-custom_csv_filename';
+                    filenameLabel.htmlFor = filenameInput.id;
+                    filenameRow.append(filenameLabel, filenameInput);
+                    group.appendChild(filenameRow);
+                }
+            });
+            form.appendChild(group);
+        });
+        status.textContent = 'Changes are saved to the app settings.';
+        $('configSave').disabled = false;
+    } catch (error) {
+        editingConfigObject = null;
+        status.textContent = error.message;
+    }
+}
+function closeConfigEditor() {
+    $('configModalBackdrop').classList.remove('show');
+    editingExchangeConfig = null;
+    editingConfigObject = null;
+}
+if ($('configClose')) $('configClose').addEventListener('click', closeConfigEditor);
+if ($('configCancel')) $('configCancel').addEventListener('click', closeConfigEditor);
+if ($('configModalBackdrop')) $('configModalBackdrop').addEventListener('click', function(event) {
+    if (event.target === $('configModalBackdrop')) closeConfigEditor();
+});
+if ($('configSave')) $('configSave').addEventListener('click', async function() {
+    if (!editingConfigObject || !editingExchangeConfig) return;
+    var status = $('configStatus');
+    var payload = JSON.parse(JSON.stringify(editingConfigObject));
+    document.querySelectorAll('#configForm [data-config-section]').forEach(function(input) {
+        if (input.dataset.configKey === 'output_csv_dir' || input.dataset.configKey === 'custom_csv_dir' || input.dataset.configKey === 'custom_csv_filename') return;
+        payload[input.dataset.configSection][input.dataset.configKey] = input.value;
+    });
+    if (editingExchangeConfig === 'BSE' && payload.FILES) {
+        var outputCsvDir = document.querySelector('#configForm [data-config-key="output_csv_dir"]');
+        var customCsvDir = document.querySelector('#configForm [data-config-key="custom_csv_dir"]');
+        var customCsvFilename = document.querySelector('#configForm [data-config-key="custom_csv_filename"]');
+        if (outputCsvDir) {
+            var outputFolder = outputCsvDir.value.trim().replace(/[\\/]+$/, '');
+            if (!outputFolder) {
+                status.textContent = 'Choose a trade CSV output folder.';
+                return;
+            }
+            payload.FILES.output_csv = outputFolder + '\\trades_dropcopy.csv';
+        }
+        if (customCsvDir && customCsvFilename) {
+            var folder = customCsvDir.value.trim().replace(/[\\/]+$/, '');
+            var filename = customCsvFilename.value.trim().replace(/^.*[\\/]/, '');
+            if (!folder || !filename) {
+                status.textContent = 'Choose a custom CSV output folder and enter a file name.';
+                return;
+            }
+            payload.FILES.custom_csv = folder + '\\' + filename;
+        }
+    }
+    status.textContent = 'Saving…';
+    $('configSave').disabled = true;
+    try {
+        var result = await window.api.saveExchangeConfig(editingExchangeConfig, payload);
+        if (!result || !result.ok) throw new Error(result && result.error || 'Could not save configuration.');
+        status.textContent = 'Configuration saved.';
+        editingConfigObject = payload;
+        setTimeout(closeConfigEditor, 650);
+    } catch (error) {
+        status.textContent = error.message;
+        $('configSave').disabled = false;
+    }
+});
+
+/* ================================================================
+   Cancel popup (unchanged)
+   ================================================================ */
+function showCancelPopup(trade) {
+    var backdrop = $('cancelPopupBackdrop');
+    var body = $('cancelPopupBody');
+    var timeEl = $('cancelPopupTime');
+    var progress = $('cancelPopupProgress');
+    var subtitle = $('cancelPopupSubtitle');
+    if (!backdrop || !body) return;
+
+    var exchangeName = trade.exchange === 'BSEFO' ? 'BSEFO' : 'NSEFO';
+    if (subtitle) subtitle.textContent = exchangeName + ' Drop Copy · ' + String(trade.trade_status || 'CANCEL');
+
+    var rows = [
+        ['Symbol',      trade.symbol],
+        ['Instrument',  trade.instrument],
+        ['Expiry',      trade.expiry_date],
+        ['Strike',      trade.strike_price],
+        ['Option Type', trade.option_type],
+        ['Side',        trade.buy_sell],
+        ['Quantity',    trade.ex_qty],
+        ['Price',       trade.ex_price],
+        ['Member ID',   trade.member_id],
+        ['Trader ID',   trade.trader_id],
+        ['Client ID',   trade.clnt_id],
+        ['Trade No',    trade.trade_no],
+        ['Order No',    trade.order_no],
+        ['Time',        trade.time],
+        ['Timestamp',   trade.timestamp],
+        ['PAN',         trade.pan]
+    ];
+
+    var html = '';
+    for (var i = 0; i < rows.length; i++) {
+        var label = rows[i][0];
+        var value = rows[i][1];
+        if (value === undefined || value === null || value === '') value = '—';
+        var valStr = String(value);
+        var cls = 'cancel-popup-value';
+        if (label === 'Side') {
+            if (valStr === 'BUY') cls += ' buy';
+            else if (valStr === 'SELL') cls += ' sell';
+        }
+        html += '<div class="cancel-popup-row"><div class="cancel-popup-label">' + label + '</div>' +
+                '<div class="' + cls + '">' + esc(valStr) + '</div></div>';
+    }
+    body.innerHTML = html;
+    if (timeEl) timeEl.textContent = new Date().toLocaleString();
+    if (progress) {
+        progress.style.animation = 'none';
+        void progress.offsetWidth;
+        progress.style.animation = 'cancelCountdown ' + CANCEL_POPUP_DURATION_MS + 'ms linear forwards';
+    }
+    backdrop.classList.add('show');
+    if (_cancelPopupTimer) clearTimeout(_cancelPopupTimer);
+    _cancelPopupTimer = setTimeout(hideCancelPopup, CANCEL_POPUP_DURATION_MS);
+}
+function hideCancelPopup() {
+    var backdrop = $('cancelPopupBackdrop');
+    if (backdrop) backdrop.classList.remove('show');
+    if (_cancelPopupTimer) { clearTimeout(_cancelPopupTimer); _cancelPopupTimer = null; }
+}
+(function wireCancelPopup() {
+    var closeBtn = $('cancelPopupClose');
+    var backdrop = $('cancelPopupBackdrop');
+    if (closeBtn) closeBtn.addEventListener('click', hideCancelPopup);
+    if (backdrop) backdrop.addEventListener('click', function (e) { if (e.target === backdrop) hideCancelPopup(); });
+})();
+
+/* ================================================================
+   Filtering — cached so scroll doesn't recompute it
+   ================================================================ */
+function rowMatches(row) {
+    if (exchangeFilter !== 'ALL' && row.exchange !== exchangeFilter) return false;
+    if (globalSearch) {
+        var found = false;
+        for (var i = 0; i < COLUMNS.length; i++) {
+            var v = String(row[COLUMNS[i].key] || '').toLowerCase();
+            if (v.indexOf(globalSearch) !== -1) { found = true; break; }
+        }
+        if (!found) return false;
+    }
+    for (var j = 0; j < COLUMNS.length; j++) {
+        var need = columnFilters[COLUMNS[j].key];
+        if (!need) continue;
+        var vv = String(row[COLUMNS[j].key] || '').toLowerCase();
+        if (vv.indexOf(need) === -1) return false;
+    }
+    return true;
+}
+
+function invalidateFilter() {
+    _filterDirty = true;
+}
+
+function computeFiltered() {
+    if (!_filterDirty) return _filtered;
+    var out = [];
+    var hasAny = globalSearch || exchangeFilter !== 'ALL';
+    if (!hasAny) {
+        for (var k in columnFilters) { if (columnFilters[k]) { hasAny = true; break; } }
+    }
+    if (!hasAny) {
+        /* No filters — use the array directly */
+        _filtered = allTrades;
+    } else {
+        for (var i = 0; i < allTrades.length; i++) {
+            if (rowMatches(allTrades[i])) out.push(allTrades[i]);
+        }
+        _filtered = out;
+    }
+    _filterDirty = false;
+    return _filtered;
+}
+
+/* ================================================================
+   VIRTUAL RENDERING
+   ================================================================ */
+function scheduleRender(force) {
+    if (force) {
+        _renderStart = -1;
+        _renderEnd = -1;
+    }
+    if (_rafPending) return;
+    _rafPending = true;
+    requestAnimationFrame(function () {
+        _rafPending = false;
+        renderVirtual(false);
+    });
+}
+
+function renderVirtual(force) {
+    if (force) { _renderStart = -1; _renderEnd = -1; }
+
+    var filtered = computeFiltered();
+    var total = filtered.length;
+    var visibleCols = visibleCount();
+
+    /* Empty state */
+    if (total === 0) {
+        tradesBody.innerHTML = '<tr><td class="empty" colspan="' + visibleCols + '">' +
+            (allTrades.length === 0
+                ? 'No trades yet. Click Start to connect.'
+                : 'No trades match the current filters.') +
+            '</td></tr>';
+        _renderStart = -1;
+        _renderEnd = -1;
+        if (rowCountEl) rowCountEl.textContent = '0 / ' + allTrades.length + ' rows';
+        if (tradeCountEl) tradeCountEl.textContent = allTrades.length + ' trades';
+        return;
+    }
+
+    var scrollTop = tableWrap.scrollTop;
+    var viewportH = tableWrap.clientHeight || 400;
+
+    var startIdx = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - BUFFER_ROWS);
+    var endIdx   = Math.min(total, Math.ceil((scrollTop + viewportH) / ROW_HEIGHT) + BUFFER_ROWS);
+
+    /* Skip if same window AND nothing else changed */
+    if (!force && startIdx === _renderStart && endIdx === _renderEnd) {
+        if (rowCountEl) rowCountEl.textContent = total + ' / ' + allTrades.length + ' rows';
+        if (tradeCountEl) tradeCountEl.textContent = allTrades.length + ' trades';
+        return;
+    }
+    _renderStart = startIdx;
+    _renderEnd = endIdx;
+
+    var html = '';
+
+    /* Top spacer */
+    var topH = startIdx * ROW_HEIGHT;
+    if (topH > 0) {
+        html += '<tr class="spacer" aria-hidden="true">' +
+                '<td colspan="' + visibleCols + '" style="height:' + topH + 'px"></td>' +
+                '</tr>';
+    }
+
+    /* Visible rows */
+    for (var i = startIdx; i < endIdx; i++) {
+        var r = filtered[i];
+        var isCancel = isCancelledTrade(r);
+        var side = String(r && r.buy_sell || '').trim().toUpperCase();
+        var flashActive = r && tradeFlashUntil.has(r) && tradeFlashUntil.get(r) > Date.now();
+        var flashClass = flashActive && side === 'BUY' ? ' trade-flash-buy' : flashActive && side === 'SELL' ? ' trade-flash-sell' : '';
+        var selected = selectedTrades.has(r);
+        var rowClass = 'row-' + (i % 2 === 0 ? 'even' : 'odd') + (isCancel ? ' row-cancelled' : '') + (selected ? ' row-selected' : '') + flashClass;
+        html += '<tr class="' + rowClass + '" data-trade-index="' + i + '" aria-selected="' + selected + '">';
+        for (var j = 0; j < COLUMNS.length; j++) {
+            html += cellHTML(COLUMNS[j].key, r[COLUMNS[j].key]);
+        }
+        html += '</tr>';
+    }
+
+    /* Bottom spacer */
+    var bottomH = (total - endIdx) * ROW_HEIGHT;
+    if (bottomH > 0) {
+        html += '<tr class="spacer" aria-hidden="true">' +
+                '<td colspan="' + visibleCols + '" style="height:' + bottomH + 'px"></td>' +
+                '</tr>';
+    }
+
+    tradesBody.innerHTML = html;
+
+    if (rowCountEl) rowCountEl.textContent = total + ' / ' + allTrades.length + ' rows';
+    if (tradeCountEl) tradeCountEl.textContent = allTrades.length + ' trades';
+}
+
+function cellHTML(k, v) {
+    var val = (v === undefined || v === null) ? '' : String(v);
+    var ev = esc(val);
+    var hid = isVisible(k) ? '' : ' col-hidden';
+    if (k === 'exchange') {
+        var exchangeClass = val === 'BSEFO' ? 'exchange-bsefo' : 'exchange-nsefo';
+        return '<td class="exchange-cell ' + exchangeClass + hid + '" data-col="' + k + '">' + ev + '</td>';
+    }
+    if (k === 'buy_sell') {
+        var cl = val === 'BUY' ? 'side-buy' : val === 'SELL' ? 'side-sell' : '';
+        return '<td class="' + cl + hid + '" data-col="' + k + '">' + ev + '</td>';
+    }
+    if (k === 'ex_price' || k === 'strike_price') return '<td class="price' + hid + '" data-col="' + k + '">' + ev + '</td>';
+    if (k === 'symbol')      return '<td class="symbol-cell' + hid + '" data-col="' + k + '">' + ev + '</td>';
+    if (k === 'expiry_date') return '<td class="expiry-cell' + hid + '" data-col="' + k + '">' + ev + '</td>';
+    if (k === 'trade_status') {
+        var st = 'status-' + (val || 'TRADE').replace(/[^A-Z_]/g, '');
+        return '<td class="status-cell ' + st + hid + '" data-col="' + k + '">' + ev + '</td>';
+    }
+    return '<td class="' + (hid ? 'col-hidden' : '') + '" data-col="' + k + '">' + ev + '</td>';
+}
+
+/* ================================================================
+   Scroll handler — redraw window on scroll
+   ================================================================ */
+tableWrap.addEventListener('scroll', function () {
+    // Let a user's manual scroll pause live auto-follow instead of snapping
+    // back to the newest trade on the next incoming batch.
+    if (autoScrollChk && autoScrollChk.checked && tableWrap.scrollTop > ROW_HEIGHT) {
+        autoScrollChk.checked = false;
+        saveAutoScroll();
+    }
+    scheduleRender(false);
+}, { passive: true });
+
+tradesBody.addEventListener('click', function(event) {
+    var rowElement = event.target.closest('tr[data-trade-index]');
+    if (!rowElement) return;
+    var index = Number(rowElement.dataset.tradeIndex);
+    var filtered = computeFiltered();
+    var trade = filtered[index];
+    if (!trade) return;
+    if (event.shiftKey && selectionAnchor) {
+        var anchorIndex = filtered.indexOf(selectionAnchor);
+        if (anchorIndex < 0) anchorIndex = index;
+        selectedTrades.clear();
+        for (var i = Math.min(anchorIndex, index); i <= Math.max(anchorIndex, index); i++) selectedTrades.add(filtered[i]);
+    } else if (event.ctrlKey || event.metaKey) {
+        if (selectedTrades.has(trade)) selectedTrades.delete(trade);
+        else selectedTrades.add(trade);
+        selectionAnchor = trade;
+    } else {
+        selectedTrades.clear();
+        selectedTrades.add(trade);
+        selectionAnchor = trade;
+    }
+    renderVirtual(true);
+});
+
+/* ================================================================
+   Trade intake — batches into allTrades, then virtual render
+   ================================================================ */
+function isCancelledTrade(trade) {
+    var status = String(trade && trade.trade_status || '').toUpperCase();
+    return status === 'CANCEL_CONFIRM' || status === 'CANCEL' || status === 'CANCELLED';
+}
+
+function addTrade(t) {
+    _pendingTrades.push(t);
+    if (isCancelledTrade(t)) showCancelPopup(t);
+    if (!_flushTimer) _flushTimer = setTimeout(flushPendingTrades, FLUSH_INTERVAL_MS);
+}
+
+function flushPendingTrades() {
+    _flushTimer = null;
+    if (_pendingTrades.length === 0) return;
+
+    var batch = _pendingTrades.splice(0, _pendingTrades.length);
+    var added = 0;
+    for (var i = 0; i < batch.length; i++) {
+        if (batch[i] && typeof batch[i] === 'object') tradeFlashUntil.set(batch[i], Date.now() + 5000);
+        allTrades.unshift(batch[i]);
+        added++;
+    }
+    while (allTrades.length > MAX_ROWS) allTrades.pop();
+
+    invalidateFilter();
+
+    /* Auto-scroll to top if enabled */
+    if (autoScrollChk && autoScrollChk.checked) {
+        tableWrap.scrollTop = 0;
+    }
+    /* If user has scrolled, content shifts down; adjust scroll to keep view stable */
+    else if (tableWrap.scrollTop > 0) {
+        tableWrap.scrollTop += added * ROW_HEIGHT;
+    }
+
+    scheduleRender(true);
+}
+
+/* ================================================================
+   UI events
+   ================================================================ */
+if (globalSearchEl) globalSearchEl.addEventListener('input', function(){
+    globalSearch = globalSearchEl.value.trim().toLowerCase();
+    invalidateFilter();
+    tableWrap.scrollTop = 0;
+    scheduleRender(true);
+});
+if ($('clearFiltersBtn')) $('clearFiltersBtn').addEventListener('click', function(){
+    if (globalSearchEl) globalSearchEl.value = '';
+    globalSearch = '';
+    var inputs = filterRow.querySelectorAll('input[data-col]');
+    for (var i = 0; i < inputs.length; i++) inputs[i].value = '';
+    Object.keys(columnFilters).forEach(function(k){ delete columnFilters[k]; });
+    exchangeFilter = 'ALL';
+    document.querySelectorAll('[data-exchange-filter]').forEach(function(button){ button.classList.toggle('active', button.dataset.exchangeFilter === 'ALL'); });
+    invalidateFilter();
+    tableWrap.scrollTop = 0;
+    scheduleRender(true);
+});
+document.querySelectorAll('[data-exchange-filter]').forEach(function(button){
+    button.addEventListener('click', function(){
+        exchangeFilter = button.dataset.exchangeFilter;
+        document.querySelectorAll('[data-exchange-filter]').forEach(function(item){ item.classList.toggle('active', item === button); });
+        invalidateFilter();
+        tableWrap.scrollTop = 0;
+        scheduleRender(true);
+    });
+});
+if ($('clearLogsBtn')) $('clearLogsBtn').addEventListener('click', function(){ if (logsEl) logsEl.innerHTML = ''; });
+if (autoScrollChk) {
+    autoScrollChk.checked = loadAutoScroll();
+    autoScrollChk.addEventListener('change', function() {
+        saveAutoScroll();
+        if (autoScrollChk.checked) tableWrap.scrollTop = 0;
+        scheduleRender(true);
+    });
+}
+if ($('autoFitColumnsChk')) {
+    $('autoFitColumnsChk').checked = autoFitColumns;
+    $('autoFitColumnsChk').addEventListener('change', function() {
+        autoFitColumns = $('autoFitColumnsChk').checked;
+        saveAutoFitColumns();
+        applyColumnWidths();
+    });
+}
+
+/* ================================================================
+   IPC hooks
+   ================================================================ */
+if (window.api) {
+    if (window.api.onStatus) window.api.onStatus(function(d){
+        var exchange = d.exchange || 'NSEFO';
+        updateExchangeControls(exchange, !!d.running, !!d.connected);
+    });
+    if (window.api.onLogin) window.api.onLogin(function(d){
+        if (d.success) addLog('INFO', 'Login successful. Streams: ' + JSON.stringify(d.streams));
+    });
+    if (window.api.onStats) window.api.onStats(function(d){
+        var prefix = d.exchange === 'BSEFO' ? 'Bsefo' : 'Nsefo';
+        if ($( 'stat' + prefix + 'Runtime')) $('stat' + prefix + 'Runtime').textContent = fmtRuntime(d.runtime);
+        updatePulsingStat('stat' + prefix + 'TradesReceived', d.tradesReceived || 0, 'stat-flash-trades');
+        if ($('stat' + prefix + 'TradesWritten')) $('stat' + prefix + 'TradesWritten').textContent = d.tradesWritten || 0;
+        updatePulsingStat('stat' + prefix + 'Heartbeats', d.heartbeatsSent || 0, 'stat-flash-heartbeat');
+        if ($('stat' + prefix + 'Packets')) $('stat' + prefix + 'Packets').textContent = d.dataReceived || 0;
+        if ($('stat' + prefix + 'Streams')) $('stat' + prefix + 'Streams').textContent = d.streamCount || 0;
+        updateExchangeControls(d.exchange, !!d.running, !!d.connected);
+    });
+    if (window.api.onTrade) window.api.onTrade(addTrade);
+    if (window.api.onHeartbeat) window.api.onHeartbeat(function(hb){ addLog('DEBUG', '💓 Heartbeat ' + hb.direction); });
+    if (window.api.onLog) window.api.onLog(function(d){ addLog(d.level, d.message); });
+
+    if (window.api.onReset) window.api.onReset(function(d){
+        if (d && d.exchange) addLog('INFO', d.exchange + ' stream reset (' + (d.reason || 'reconnect') + ')');
+    });
+}
+
+async function startExchange(exchangeName) {
+    var controls = exchangeControls[exchangeName];
+    controls.start.disabled = true;
+    updateExchangeControls(exchangeName, true, false);
+    addLog('INFO', 'Starting ' + exchangeName + ' client...');
+    try {
+        var res = await window.api.start(controls.value);
+        if (!res.ok) { addLog('ERROR', res.error || 'Failed to start'); updateExchangeControls(exchangeName, false, false); }
+    } catch(e) { addLog('ERROR', 'Start failed: ' + e.message); updateExchangeControls(exchangeName, false, false); }
+}
+async function stopExchange(exchangeName) {
+    var controls = exchangeControls[exchangeName];
+    addLog('INFO', 'Stopping ' + exchangeName + ' client...');
+    try { await window.api.stop(controls.value); } catch(e) { addLog('ERROR', 'Stop failed: ' + e.message); }
+    updateExchangeControls(exchangeName, false, false);
+}
+exchangeControls.NSEFO.start.addEventListener('click', function(){ startExchange('NSEFO'); });
+exchangeControls.BSEFO.start.addEventListener('click', function(){ startExchange('BSEFO'); });
+exchangeControls.NSEFO.stop.addEventListener('click', function(){ stopExchange('NSEFO'); });
+exchangeControls.BSEFO.stop.addEventListener('click', function(){ stopExchange('BSEFO'); });
+/* ================================================================
+   Helpers
+   ================================================================ */
+function updateExchangeControls(exchange, running, connected) {
+    var controls = exchangeControls[exchange];
+    if (!controls) return;
+    controls.start.disabled = !!running;
+    controls.stop.disabled = !running;
+    controls.badge.className = 'badge';
+    if (running && connected) { controls.badge.classList.add('badge-online'); controls.badge.textContent = '● Online'; }
+    else if (running) { controls.badge.classList.add('badge-connecting'); controls.badge.textContent = '● Connecting'; }
+    else { controls.badge.classList.add('badge-offline'); controls.badge.textContent = '● Offline'; }
+}
+function fmtRuntime(s) {
+    var h = String(Math.floor(s/3600)).padStart(2,'0');
+    var m = String(Math.floor((s%3600)/60)).padStart(2,'0');
+    var ss = String(s%60).padStart(2,'0');
+    return h + ':' + m + ':' + ss;
+}
+function updatePulsingStat(id, value, pulseClass) {
+    var element = $(id);
+    if (!element) return;
+    var nextValue = value == null ? 0 : value;
+    var previousValue = Number(element.textContent) || 0;
+    if (Number(nextValue) > previousValue) {
+        var card = element.closest('.stat-card');
+        if (card) {
+            card.classList.remove(pulseClass);
+            void card.offsetWidth;
+            card.classList.add(pulseClass);
+        }
+    }
+    element.textContent = nextValue;
+}
+function setCompanyName(name) {
+    var el = $('companyName');
+    if (!el) return;
+    var company = name && String(name).trim() ? String(name).trim() : 'ABC Securities Pvt Ltd';
+    el.textContent = company;
+    el.title = company;
+}
+async function loadCompanyName() {
+    try { setCompanyName(await window.api.getCompanyName()); }
+    catch (e) { setCompanyName('ABC Securities Pvt Ltd'); }
+}
+function addLog(level, message) {
+    if (!logsEl) return;
+    var time = new Date().toLocaleTimeString();
+    var line = document.createElement('div');
+    line.className = 'log-line log-' + level;
+    line.innerHTML = '<span class="log-time">[' + time + ']</span>' + esc(message);
+    logsEl.appendChild(line);
+    logsEl.scrollTop = logsEl.scrollHeight;
+    while (logsEl.children.length > 500) logsEl.removeChild(logsEl.firstChild);
+}
+
+/* ================================================================
+   INIT
+   ================================================================ */
+console.log('[v20] building table');
+buildTable();
+applyLogsVisibility();
+window.api.setLogsVisible(logsVisible);
+applyColumnWidths();
+loadCompanyName();
+
+(async function loadExisting() {
+    try {
+        var res = await window.api.loadTrades();
+        if (res && res.trades && res.trades.length) {
+            var reversed = res.trades.slice().reverse();
+            for (var i = 0; i < reversed.length; i++) allTrades.push(reversed[i]);
+            invalidateFilter();
+            scheduleRender(true);
+            addLog('INFO', 'Loaded ' + res.trades.length + ' existing trades');
+        } else {
+            scheduleRender(true);
+        }
+    } catch (e) {
+        console.error('[app] loadTrades failed:', e);
+        scheduleRender(true);
+    }
+})();
+
+/* Redraw on window resize (viewport height changes) */
+var _resizeTimer = null;
+window.addEventListener('resize', function () {
+    clearTimeout(_resizeTimer);
+    _resizeTimer = setTimeout(function () { applyColumnWidths(); scheduleRender(true); }, 200);
+});
+if (window.ResizeObserver && tableWrap) {
+    var tableSizeObserver = new ResizeObserver(function () {
+        applyColumnWidths();
+        scheduleRender(true);
+    });
+    tableSizeObserver.observe(tableWrap);
+}
+
+console.log('[v20] DONE — virtual scrolling active');
+</script>
+</body>
+</html>
